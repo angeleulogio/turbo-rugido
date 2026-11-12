@@ -1,0 +1,9 @@
+# Pruebas en PC (no es el juego de GameCube): simula carreras y genera capturas
+SRC = source/core.c source/track.c source/cars.c source/vehicle.c source/race.c source/font.c source/game.c pc/plat_pc.c
+all: pc_test
+pc_test: $(SRC) pc/main_pc.c
+	gcc -O2 -Wall -o pc_test $(SRC) pc/main_pc.c -lm
+sim: pc_test
+	./pc_test sim
+shots: pc_test
+	mkdir -p shots && ./pc_test
