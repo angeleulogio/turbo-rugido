@@ -9,8 +9,8 @@ Todas las pistas, autos, sonidos y textos están generados por código: es un di
   - **ARCADE DERRAPE**: derrapes largos y estables, sin daños.
   - **ARCADE CHOQUES**: turbo que se gana arriesgando, tráfico, takedowns y choques con cámara lenta.
   - **SIMULACION**: transferencia de peso, límite de agarre, tracción trasera, delantera o 4x4, ABS y controles de tracción y estabilidad.
-- **3 pistas**: CIRCUITO OCHO (con puente), FORTALEZA AZUL (castillo y jardines) y VALLE DEL TUNEL (colinas y túnel).
-- **4 autos**: FURIA R, COMETA GT, TORMENTA 4X y BRISA V12.
+- **14 pistas**: CIRCUITO OCHO (con puente), FORTALEZA AZUL (castillo y jardines), VALLE DEL TUNEL (colinas y túnel), tres trazados dibujados a mano por el jugador (BURGOS, MONTE FUJI y CASTELLOLI) y dos diseñados por su hermano: SUPEROVALO (óvalo con infield, gradas y torres de luz al atardecer) y COSTA ALTA (ciudad costera que sube del mar a la montaña), y PARQUE TUCAN, el recorrido real del parque de Monterrey agrandado a escala: parque hundido entre colonias, con el cerro de roca detrás. Y cinco trazados más dibujados por el jugador y ambientados en paisajes de México: DESIERTO SONORA (saguaros y mesetas rojas), SELVA MAYA (selva, pirámide y cenotes), LOS VOLCANES (bosque de pinos y dos volcanes nevados), CAMPOS DE AGAVE (hileras de agave azul, hacienda y volcán) y BAJA CALIFORNIA (carretera entre la sierra y el mar, con cardones y un arco de roca).
+- **8 autos**: FURIA R, COMETA GT, TORMENTA 4X, BRISA V12, HAYASHI INCEPTION (sedán de 4 puertas diseñado por el hermano del jugador, con tracción 4x4), y tres dibujados por el jugador: YILDIZ GT (superdeportivo en cuña de los 80) ATLAS 84 (sedán cuadrado de los 80, tracción trasera y muy fácil de derrapar) y LUTECE V10 (sedán con motor V10 de carreras, el más rápido del juego).
 - 3 rivales controlados por la IA, 3 vueltas, posiciones, mejor vuelta, minimapa, pausa y pantalla de resultados.
 
 ## Controles (mando de GameCube)
@@ -81,3 +81,7 @@ Los números están en `source/vehicle.c` y en `CAR_SPECS` (`source/cars.c`). Ah
 
 - `make -f Makefile.pc sim`: corre carreras automáticas en las 3 pistas con los 3 modos y muestra tiempos de vuelta.
 - `make -f Makefile.pc shots`: genera capturas en `shots/`.
+
+## Créditos
+
+El trazado de PARQUE TUCAN se tomó de un mapa de © colaboradores de OpenStreetMap (datos bajo licencia ODbL, openstreetmap.org/copyright).

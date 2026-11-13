@@ -8,7 +8,7 @@
 #define TRACK_MAX_CHUNKS 64
 #define TRACK_SPACING   3.0f
 
-enum { TRACK_OCHO = 0, TRACK_FORTALEZA, TRACK_VALLE, TRACK_COUNT };
+enum { TRACK_OCHO = 0, TRACK_FORTALEZA, TRACK_VALLE, TRACK_BURGOS, TRACK_FUJI, TRACK_CASTELLOLI, TRACK_OVALO, TRACK_COSTA, TRACK_TUCAN, TRACK_SONORA, TRACK_MAYA, TRACK_VOLCANES, TRACK_AGAVE, TRACK_BAJA, TRACK_COUNT };
 
 typedef struct {
     V3 c;          /* centro */
@@ -34,6 +34,10 @@ typedef struct {
     V3 center;                   /* centro aproximado del circuito */
     float extent;                /* radio aproximado */
     Col sky_top, sky_horizon, fog;
+    float fog_start, fog_end, zfar;  /* distancias de niebla y de dibujo */
+    Col curb_a, curb_b;              /* colores de los pianos */
+    int terrain;                     /* 1 = parque hundido con terreno de alturas */
+    float street_y;                  /* altura de la calle alrededor (terreno) */
     TrackChunk chunks[TRACK_MAX_CHUNKS];
     int nchunks;
     Mesh world;                  /* suelo y montanas (siempre visible) */

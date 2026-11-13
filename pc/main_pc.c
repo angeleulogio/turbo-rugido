@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "sim") == 0) {
         for (t = 0; t < TRACK_COUNT; t++)
             for (m = 0; m < MODE_COUNT; m++) sim_test(t, m, m == 2 ? 1 : 0);
-        sim_test(2, 0, 3); sim_test(0, 2, 2); sim_test(1, 1, 2);
+        sim_test(4, 0, 5); sim_test(6, 2, 5); sim_test(7, 1, 5); sim_test(9, 0, 0); sim_test(9, 2, 5); sim_test(10, 1, 2); sim_test(10, 2, 1); sim_test(11, 0, 3); sim_test(11, 2, 6); sim_test(12, 1, 4); sim_test(12, 2, 7); sim_test(13, 0, 6); sim_test(13, 2, 1);
         return 0;
     }
     game_init();

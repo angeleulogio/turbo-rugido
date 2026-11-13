@@ -300,14 +300,14 @@ static void render_race(void) {
         plat_sky(&vps[p], tr->sky_top, tr->sky_horizon);
         race_camera(r, p, view, &fov);
         if (np > 1) fov *= 0.72f;
-        plat_view_begin(&vps[p], fov, 0.5f, 2600.0f, view, tr->fog, 420.0f, 1900.0f);
+        plat_view_begin(&vps[p], fov, 0.5f, tr->zfar, view, tr->fog, tr->fog_start, tr->fog_end);
         plat_draw(tr->world_gpu, NULL);
         for (i = 0; i < tr->nchunks; i++) {
             TrackChunk *c = &tr->chunks[i];
             V3 dv = vsub(c->c, eye);
             float dist = vlen(dv);
             if (!c->gpu) continue;
-            if (dist - c->r > 1300.0f) continue;
+            if (dist - c->r > 1400.0f) continue;
             if (vdot(dv, fwd) < -c->r) continue;
             plat_draw(c->gpu, NULL);
         }
@@ -425,11 +425,19 @@ void game_frame(const PadIn pads[2], float dt) {
         plat_sky(&vp, g_preview[G.sel].sky_top.r ? g_preview[G.sel].sky_top : col(30, 40, 90), col(30, 40, 90));
         plat_2d_begin();
         text_draw_center(SCREEN_W / 2, 40, "PISTA", 4, YELLOW);
-        draw_list(it, TRACK_COUNT, G.sel, 100, 38, 3);
-        plat_rect(SCREEN_W / 2 - 110, 230, 220, 200, cola(0, 0, 0, 120));
-        draw_minimap(&g_preview[G.sel], SCREEN_W / 2, 330, 190, NULL);
+        {
+            /* lista con desplazamiento: 9 pistas visibles */
+            int vis = 9, first = G.sel - 4;
+            if (first > TRACK_COUNT - vis) first = TRACK_COUNT - vis;
+            if (first < 0) first = 0;
+            draw_list(it + first, TRACK_COUNT - first < vis ? TRACK_COUNT - first : vis, G.sel - first, 82, 23, 2);
+            if (first > 0) text_draw_center(SCREEN_W / 2 + 150, 82, "+", 2, GREY);
+            if (first + vis < TRACK_COUNT) text_draw_center(SCREEN_W / 2 + 150, 82 + 8 * 23, "+", 2, GREY);
+        }
+        plat_rect(SCREEN_W / 2 - 85, 290, 170, 156, cola(0, 0, 0, 120));
+        draw_minimap(&g_preview[G.sel], SCREEN_W / 2, 368, 145, NULL);
         snprintf(b, sizeof(b), "%d M - %d VUELTAS", (int)g_preview[G.sel].length, RACE_LAPS);
-        text_draw_center(SCREEN_W / 2, 445, b, 2, WHITE);
+        text_draw_center(SCREEN_W / 2, 454, b, 2, WHITE);
         if (n0 & BTN_UP) { G.sel = (G.sel + TRACK_COUNT - 1) % TRACK_COUNT; plat_sfx(SFX_SELECT); }
         if (n0 & BTN_DOWN) { G.sel = (G.sel + 1) % TRACK_COUNT; plat_sfx(SFX_SELECT); }
         if (pr0 & BTN_A) { G.track = G.sel; G.st = GS_CAR; G.car_player = 0; G.sel = G.cars[0]; plat_sfx(SFX_SELECT); }

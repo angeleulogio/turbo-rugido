@@ -4,7 +4,7 @@
 
 #include "core.h"
 
-#define CAR_COUNT 4
+#define CAR_COUNT 8
 
 typedef struct {
     const char *name;
@@ -23,7 +23,7 @@ typedef struct {
     int drive;         /* 0 = traccion trasera, 1 = delantera, 2 = 4x4 */
     float weight_front;/* reparto de peso delante 0..1 */
     /* diseno */
-    int shape;         /* 0 cuna, 1 coupe GT, 2 rally compacto, 3 gran turismo largo */
+    int shape;         /* 0 cuna, 1 coupe GT, 2 rally compacto, 3 gran turismo largo, 4 sedan 4 puertas, 5 cuna de los 80, 6 sedan cuadrado de los 80, 7 sedan V10 */
     Col paint, accent;
 } CarSpec;
 
