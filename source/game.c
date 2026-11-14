@@ -307,7 +307,7 @@ static void render_race(void) {
             V3 dv = vsub(c->c, eye);
             float dist = vlen(dv);
             if (!c->gpu) continue;
-            if (dist - c->r > 1400.0f) continue;
+            if (dist - c->r > fminf(1400.0f, tr->fog_end + 150.0f)) continue;
             if (vdot(dv, fwd) < -c->r) continue;
             plat_draw(c->gpu, NULL);
         }

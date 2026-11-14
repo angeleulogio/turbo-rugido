@@ -8,7 +8,7 @@ static V3 raw[RAW_MAX];
 static int nraw;
 
 static const char *NAMES[TRACK_COUNT] = { "CIRCUITO OCHO", "FORTALEZA AZUL", "VALLE DEL TUNEL", "BURGOS", "MONTE FUJI", "CASTELLOLI", "SUPEROVALO", "COSTA ALTA", "PARQUE TUCAN",
-    "DESIERTO SONORA", "SELVA MAYA", "LOS VOLCANES", "CAMPOS DE AGAVE", "BAJA CALIFORNIA" };
+    "DESIERTO SONORA", "SELVA MAYA", "LOS VOLCANES", "CAMPOS DE AGAVE", "BAJA CALIFORNIA", "CUMBRES NEVADAS", "PARQUE FUNDIDORA", "VILLA OLIMPICA", "PARQUE ACUATICO", "EL SEMINARIO", "ISLA DEL SOL", "ESPINAZO", "CAMPOS DEL TREN", "BOSQUE DENSO" };
 
 const char *track_name(int id) { return (id >= 0 && id < TRACK_COUNT) ? NAMES[id] : "?"; }
 
@@ -440,6 +440,350 @@ static const float BAJA_CP[][3] = {
     {-407, -358, 26.0},
     {-441, -515, 28.0},
     {-430, -672, 30.0}
+};
+
+/* dibujado por el jugador: recta plana abajo, lado sur mas alto y cordillera nevada al sur */
+static const float CUMBRES_CP[][3] = {
+    {-222, -218, 0.0},
+    {-27, -218, 0.0},
+    {183, -218, 0.0},
+    {392, -218, 0.0},
+    {587, -218, 0.0},
+    {662, -191, 0.2},
+    {635, -146, 1.6},
+    {594, -111, 2.7},
+    {527, -56, 4.7},
+    {377, -56, 4.7},
+    {257, -63, 4.4},
+    {201, 4, 6.8},
+    {145, 104, 10.7},
+    {96, 161, 12.9},
+    {-12, 188, 14.0},
+    {-72, 251, 16.5},
+    {-124, 326, 19.5},
+    {-162, 374, 21.5},
+    {-237, 383, 21.9},
+    {-327, 344, 20.3},
+    {-414, 269, 17.2},
+    {-449, 191, 14.1},
+    {-446, 116, 11.1},
+    {-409, 64, 9.1},
+    {-327, 12, 7.1},
+    {-192, -18, 6.0},
+    {-42, -39, 5.2},
+    {25, -54, 4.7},
+    {60, -81, 3.7},
+    {36, -114, 2.6},
+    {-72, -126, 2.2},
+    {-222, -135, 1.9},
+    {-327, -141, 1.7},
+    {-364, -165, 0.9},
+    {-330, -201, 0.0}
+};
+
+/* Parque Fundidora (Monterrey): antiguo autodromo, trazado tomado de una foto satelital */
+static const float FUND_CP[][3] = {
+    {-131, -310, 1.0},
+    {-16, -304, 1.0},
+    {178, -293, 1.0},
+    {374, -277, 1.0},
+    {467, -240, 1.0},
+    {497, -190, 1.0},
+    {497, -118, 1.0},
+    {489, -79, 1.0},
+    {407, -64, 1.0},
+    {277, -73, 1.0},
+    {139, -79, 1.0},
+    {73, -64, 1.0},
+    {21, -31, 1.0},
+    {11, 14, 1.0},
+    {48, 76, 1.0},
+    {114, 195, 1.0},
+    {155, 284, 1.0},
+    {217, 335, 1.0},
+    {238, 354, 1.0},
+    {203, 387, 1.0},
+    {-20, 389, 1.0},
+    {-210, 348, 1.0},
+    {-404, 336, 1.0},
+    {-478, 303, 1.0},
+    {-461, 272, 1.0},
+    {-385, 241, 1.0},
+    {-362, 212, 1.0},
+    {-352, 135, 1.0},
+    {-329, -66, 1.0},
+    {-307, -254, 1.0},
+    {-296, -351, 1.0},
+    {-269, -388, 1.0},
+    {-201, -372, 1.0},
+    {-185, -330, 1.0}
+};
+#define FUN_X(px) (((px) - 307.29f) * 1.9419f)
+#define FUN_Z(py) (((py) - 229.74f) * 1.9419f)
+
+/* dibujado por el jugador, inspirado en un parque deportivo de San Bernabe */
+static const float VILLA_CP[][3] = {
+    {-60, -627, 1.0},
+    {65, -552, 1.0},
+    {190, -444, 1.0},
+    {337, -341, 1.0},
+    {431, -268, 1.0},
+    {463, -199, 1.0},
+    {432, -143, 1.0},
+    {390, -95, 1.0},
+    {273, -100, 1.0},
+    {196, -110, 1.0},
+    {65, -95, 1.0},
+    {-46, -81, 1.0},
+    {-60, -12, 1.0},
+    {-56, 91, 1.0},
+    {-46, 188, 1.0},
+    {-4, 208, 1.0},
+    {65, 224, 1.0},
+    {80, 265, 1.0},
+    {79, 404, 1.0},
+    {68, 542, 1.0},
+    {52, 563, 1.0},
+    {-4, 571, 1.0},
+    {-108, 570, 1.0},
+    {-212, 573, 1.0},
+    {-236, 546, 1.0},
+    {-240, 473, 1.0},
+    {-243, 265, 1.0},
+    {-241, 120, 1.0},
+    {-191, 78, 1.0},
+    {-116, 36, 1.0},
+    {-105, -26, 1.0},
+    {-112, -88, 1.0},
+    {-160, -136, 1.0},
+    {-185, -199, 1.0},
+    {-174, -268, 1.0},
+    {-157, -359, 1.0},
+    {-172, -455, 1.0},
+    {-149, -528, 1.0},
+    {-108, -592, 1.0}
+};
+
+/* dibujado por el jugador: parque acuatico en la falda de un cerro (norte alto, sur bajo) */
+static const float AZTLAN_CP[][3] = {
+    {-375, -336, 13.54},
+    {-328, -259, 12.68},
+    {-282, -166, 11.24},
+    {-243, -88, 9.75},
+    {-236, 28, 7.30},
+    {-219, 185, 4.00},
+    {-181, 301, 1.92},
+    {-134, 394, 0.72},
+    {-64, 488, 0.07},
+    {-9, 527, 0.00},
+    {37, 519, 0.00},
+    {131, 473, 0.13},
+    {247, 410, 0.56},
+    {341, 364, 1.06},
+    {355, 301, 1.92},
+    {302, 208, 3.55},
+    {278, 107, 5.61},
+    {286, -10, 8.12},
+    {310, -126, 10.51},
+    {300, -242, 12.46},
+    {270, -313, 13.32},
+    {170, -336, 13.54},
+    {68, -337, 13.54},
+    {-26, -391, 13.89},
+    {-96, -442, 14.00},
+    {-219, -441, 14.00},
+    {-313, -434, 14.00},
+    {-371, -383, 13.85}
+};
+#define AZT_ZMIN (-442.3f)
+#define AZT_ZMAX (527.0f)
+#define AZT_H (14.0f)
+
+/* calles alrededor del seminario (Monterrey), tomadas de una foto satelital y agrandadas a escala */
+static const float SEMI_CP[][3] = {
+    {-332, -213, 1.3},
+    {-226, -215, 1.3},
+    {-116, -220, 1.3},
+    {23, -246, 1.2},
+    {146, -274, 1.2},
+    {264, -309, 1.1},
+    {395, -332, 1.0},
+    {484, -287, 1.1},
+    {531, -248, 1.2},
+    {531, -172, 1.4},
+    {496, -98, 1.6},
+    {417, -20, 1.9},
+    {273, 64, 2.1},
+    {143, 140, 2.3},
+    {29, 209, 2.5},
+    {-78, 286, 2.7},
+    {-167, 341, 2.9},
+    {-195, 374, 2.9},
+    {-231, 385, 3.0},
+    {-267, 364, 2.9},
+    {-292, 341, 2.9},
+    {-358, 258, 2.6},
+    {-371, 133, 2.3},
+    {-371, 18, 2.0},
+    {-371, -103, 1.6},
+    {-356, -177, 1.4}
+};
+#define SEM_X(px) (((px) - 290.19f) * 1.6490f)
+#define SEM_Z(py) (((py) - 319.27f) * 1.6490f)
+
+/* dibujado por el jugador: circuito en una isla con hoteles de playa */
+static const float ISLA_CP[][3] = {
+    {486, 195, 1.5},
+    {402, 310, 2.9},
+    {288, 421, 3.8},
+    {179, 527, 3.9},
+    {79, 618, 3.2},
+    {-37, 614, 1.9},
+    {-103, 560, 0.4},
+    {-128, 444, -0.7},
+    {-145, 368, -1.0},
+    {-202, 309, -0.4},
+    {-294, 202, 0.8},
+    {-311, 104, 2.3},
+    {-319, 20, 3.5},
+    {-357, -87, 4.0},
+    {-369, -163, 3.6},
+    {-336, -220, 2.5},
+    {-286, -270, 1.1},
+    {-205, -271, -0.2},
+    {-101, -295, -1.0},
+    {-77, -353, -0.8},
+    {-88, -436, 0.2},
+    {-112, -517, 1.6},
+    {-70, -560, 3.0},
+    {-26, -523, 3.9},
+    {38, -436, 3.9},
+    {121, -303, 3.1},
+    {187, -195, 1.8},
+    {171, -162, 0.3},
+    {204, -87, -0.7},
+    {237, -4, -1.0},
+    {327, 22, -0.4},
+    {403, 46, 0.9},
+    {443, 120, 2.4}
+};
+
+/* dibujado por el jugador: cima de una cresta de montana con barrancos a ambos lados */
+static const float ESPINAZO_CP[][3] = {
+    {-173, -467, 150.0},
+    {-217, -436, 157.7},
+    {-255, -303, 153.5},
+    {-168, -178, 153.0},
+    {-104, -46, 155.9},
+    {-93, 113, 147.6},
+    {-122, 229, 141.1},
+    {-253, 384, 146.8},
+    {-271, 493, 148.2},
+    {-184, 603, 146.2},
+    {-130, 649, 154.5},
+    {-39, 655, 159.5},
+    {44, 649, 152.2},
+    {157, 595, 150.2},
+    {182, 462, 151.8},
+    {163, 392, 143.8},
+    {63, 243, 140.7},
+    {24, 129, 149.4},
+    {13, -54, 151.6},
+    {15, -203, 150.0},
+    {48, -303, 157.1},
+    {152, -340, 158.3},
+    {269, -381, 148.5},
+    {307, -475, 146.6},
+    {269, -511, 148.7},
+    {198, -507, 142.7},
+    {129, -456, 143.3},
+    {30, -445, 153.7},
+    {-54, -489, 154.9}
+};
+
+/* dibujado por el jugador: campo de cultivo con una via de tren junto a la recta superior */
+static const float GRANJA_CP[][3] = {
+    {-627, 216, 1.0},
+    {-625, 89, 1.7},
+    {-623, -29, 2.3},
+    {-613, -78, 2.5},
+    {-466, -112, 2.4},
+    {-210, -161, 1.9},
+    {-83, -195, 1.2},
+    {45, -235, 0.5},
+    {155, -292, -0.1},
+    {257, -356, -0.5},
+    {403, -442, -0.4},
+    {544, -420, -0.1},
+    {572, -343, 0.6},
+    {530, -208, 1.3},
+    {577, -139, 2.0},
+    {556, -43, 2.4},
+    {486, 12, 2.5},
+    {341, 37, 2.2},
+    {258, 91, 1.6},
+    {234, 174, 0.9},
+    {208, 286, 0.2},
+    {129, 294, -0.3},
+    {11, 296, -0.5},
+    {-57, 238, -0.3},
+    {-213, 224, 0.2},
+    {-284, 231, 0.9},
+    {-381, 292, 1.6},
+    {-509, 291, 2.2},
+    {-614, 282, 2.5}
+};
+/* extremos de la recta superior (via del tren) */
+#define GRJ_A_X (-613.5f)
+#define GRJ_A_Z (-78.2f)
+#define GRJ_B_X (402.7f)
+#define GRJ_B_Z (-442.1f)
+
+/* dibujado por el jugador: camino entre un bosque muy denso */
+static const float BOSQUE_CP[][3] = {
+    {133, 232, 3.0},
+    {76, 310, 5.8},
+    {18, 386, 6.1},
+    {-34, 434, 4.9},
+    {-90, 400, 4.6},
+    {-150, 324, 5.7},
+    {-217, 205, 5.8},
+    {-157, 137, 3.5},
+    {-60, 83, 0.4},
+    {45, 74, -0.5},
+    {114, 62, 0.7},
+    {151, 9, 1.6},
+    {137, -50, 0.8},
+    {105, -83, 0.3},
+    {1, -44, 2.1},
+    {-105, -15, 5.3},
+    {-226, -45, 6.8},
+    {-375, -62, 5.8},
+    {-502, -74, 4.4},
+    {-561, -142, 4.7},
+    {-553, -196, 5.4},
+    {-499, -247, 4.2},
+    {-451, -268, 1.1},
+    {-361, -252, -0.9},
+    {-255, -269, -0.3},
+    {-150, -260, 1.4},
+    {-105, -250, 1.7},
+    {-29, -276, 1.0},
+    {46, -284, 1.7},
+    {84, -247, 4.4},
+    {137, -182, 6.9},
+    {196, -150, 6.7},
+    {305, -154, 4.9},
+    {372, -129, 3.9},
+    {396, -81, 4.5},
+    {381, -7, 4.4},
+    {366, 32, 2.1},
+    {373, 99, -0.7},
+    {386, 174, -1.1},
+    {361, 208, 0.7},
+    {302, 214, 2.2},
+    {226, 191, 2.0},
+    {174, 194, 1.8}
 };
 
 static void finalize_centerline(Track *tr) {
@@ -1288,7 +1632,38 @@ static void scenery_burgos(Track *tr) {
 
 /* ---------- Monte Fuji: autodromo con gradas, boxes, bosque y el volcan al fondo ---------- */
 
+
+/* ---------- colocacion segura: nada de escenografia sobre la pista ---------- */
+
+static const Track *g_cur;   /* pista que se esta construyendo */
+static void grada_raw(Mesh *m, Rng *rg, V3 c, V3 r, V3 f, float hl);
+static void boxes_raw(Mesh *m, V3 c, V3 r, V3 f, float hl);
+
+/* revisa toda la superficie de un objeto rectangular (x a lo largo de r, z a lo largo de f) */
+static int footprint_ok(const Track *tr, V3 c, V3 r, V3 f, float x0, float x1, float hl, float margin) {
+    float x, z;
+    for (x = x0; x <= x1 + 0.01f; x += 3.0f)
+        for (z = -hl; z <= hl + 0.01f; z += 3.0f) {
+            V3 q = v3(c.x + r.x * x + f.x * z, 0, c.z + r.z * x + f.z * z);
+            if (min_dist_xz(tr, q, NULL) < tr->wall + margin) return 0;
+        }
+    return 1;
+}
+
+/* gradas: si en una curva invaden la pista, se acortan; si no caben, no se ponen */
 static void grada(Mesh *m, Rng *rg, V3 c, V3 r, V3 f, float hl) {
+    r = vnorm(v3(r.x, 0, r.z)); f = vnorm(v3(f.x, 0, f.z));
+    for (; hl >= 12.0f; hl -= 6.0f)
+        if (footprint_ok(g_cur, c, r, f, -15.0f, 1.2f, hl, 1.2f)) { grada_raw(m, rg, c, r, f, hl); return; }
+}
+
+static void boxes_y_torre(Mesh *m, V3 c, V3 r, V3 f, float hl) {
+    r = vnorm(v3(r.x, 0, r.z)); f = vnorm(v3(f.x, 0, f.z));
+    for (; hl >= 20.0f; hl -= 8.0f)
+        if (footprint_ok(g_cur, c, r, f, -9.5f, 20.0f, hl, 1.0f)) { boxes_raw(m, c, r, f, hl); return; }
+}
+
+static void grada_raw(Mesh *m, Rng *rg, V3 c, V3 r, V3 f, float hl) {
     /* r apunta hacia la pista; las gradas suben alejandose de ella */
     int s, k;
     Col conc = col(200, 200, 206), seat = col(48, 92, 170);
@@ -1311,7 +1686,7 @@ static void grada(Mesh *m, Rng *rg, V3 c, V3 r, V3 f, float hl) {
     }
 }
 
-static void boxes_y_torre(Mesh *m, V3 c, V3 r, V3 f, float hl) {
+static void boxes_raw(Mesh *m, V3 c, V3 r, V3 f, float hl) {
     /* r apunta hacia la pista */
     Col wall = col(236, 236, 240), dark = col(46, 52, 62), glass = col(60, 110, 160);
     int k;
@@ -1710,16 +2085,35 @@ static int inside_loop(const Track *tr, float x, float z) {
 static float smooth01(float t) { t = clampf(t, 0, 1); return t * t * (3 - 2 * t); }
 
 /* altura del terreno: el parque es un valle; afuera sube hasta el nivel de la calle */
+static float slope_h(float z) {
+    return AZT_H * smooth01((AZT_ZMAX - z) / (AZT_ZMAX - AZT_ZMIN));
+}
+
 static float terrain_h(const Track *tr, float x, float z) {
     int ni;
     float d = min_dist_xz(tr, v3(x, 0, z), &ni);
     float ty = tr->p[ni].y - 0.15f;
+    if (tr->terrain == 2) return lerpf(ty, slope_h(z) - 0.15f, smooth01((d - tr->wall - 4.0f) / 26.0f));
+    if (tr->terrain == 3) {
+        if (inside_loop(tr, x, z)) return ty - 0.15f;
+        return lerpf(ty, tr->street_y, smooth01((d - tr->wall - 1.0f) / 90.0f));
+    }
     if (inside_loop(tr, x, z)) return ty - 0.03f * fmaxf(0.0f, d - tr->wall) - 0.2f * smooth01((d - tr->wall) / 30.0f);
     return lerpf(ty, tr->street_y, smooth01((d - tr->wall - 0.6f) / 40.0f));
 }
 
 static Col terrain_col(const Track *tr, float h, int alt) {
-    float t = clampf(h / tr->street_y, 0, 1);
+    float t;
+    if (tr->terrain == 3) {   /* roca en los barrancos, bosque en el valle, pasto en la cima */
+        if (h > 140.0f) return alt ? col(118, 150, 80) : col(110, 142, 76);
+        if (h > 30.0f) return alt ? col(150, 128, 104) : col(138, 118, 96);
+        return alt ? col(64, 112, 62) : col(58, 104, 58);
+    }
+    if (tr->terrain == 2) {   /* ladera de pasto con zonas de tierra en lo alto */
+        if (h > AZT_H * 0.7f) return alt ? col(132, 160, 84) : col(124, 152, 80);
+        return alt ? col(106, 164, 80) : col(98, 156, 76);
+    }
+    t = clampf(h / tr->street_y, 0, 1);
     Col grass = alt ? col(104, 156, 72) : col(96, 148, 68);
     Col slope = alt ? col(128, 140, 84) : col(120, 134, 80);
     if (t > 0.97f) return alt ? col(176, 170, 156) : col(164, 160, 148);   /* calles y lotes */
@@ -1736,12 +2130,12 @@ static void build_world_terrain(Track *tr) {
             float dc;
             int ci;
             dc = min_dist_xz(tr, v3(x0 + T * 0.5f, 0, z0 + T * 0.5f), &ci);
-            if (dc > tr->wall + 40.0f + T * 0.75f && !inside_loop(tr, x0 + T * 0.5f, z0 + T * 0.5f)) {
-                Col c = ((x + z) & 1) ? col(176, 170, 156) : col(164, 160, 148);
+            if ((tr->terrain == 1 || tr->terrain == 3) && dc > tr->wall + (tr->terrain == 3 ? 100.0f : 40.0f) + T * 0.75f && !inside_loop(tr, x0 + T * 0.5f, z0 + T * 0.5f)) {
+                Col c = tr->terrain == 3 ? (((x + z) & 1) ? col(64, 112, 62) : col(58, 104, 58)) : (((x + z) & 1) ? col(176, 170, 156) : col(164, 160, 148));
                 mesh_quad_flat(m, v3(x0, S, z0), v3(x0 + T, S, z0), v3(x0 + T, S, z0 + T), v3(x0, S, z0 + T), c);
             } else {
                 /* celda con desnivel: malla de alturas de 10 m */
-                const int K = 10;
+                const int K = (tr->terrain == 2 && dc > tr->wall + 60.0f + T * 0.75f && !inside_loop(tr, x0 + T * 0.5f, z0 + T * 0.5f)) ? 2 : 10;
                 float hs[11][11];
                 int a, b;
                 float st = T / K;
@@ -2002,7 +2396,7 @@ static void scenery_maya(Track *tr) {
         V3 q = at(tr, i, ((rng_u(&rg) & 1) ? 1 : -1) * (tr->wall + rng_range(&rg, 3, 90)), 0);
         q.y = 0;
         if (min_dist_xz(tr, q, &ni) < tr->wall + 3) continue;
-        if (k % 6 == 0) palmera(chunk_mesh(tr, ni), q, rng_range(&rg, 0.9f, 1.3f));
+        if (k % 6 == 0) { if (min_dist_xz(tr, q, NULL) > tr->wall + 7) palmera(chunk_mesh(tr, ni), q, rng_range(&rg, 0.9f, 1.3f)); }
         else tree_round(chunk_mesh(tr, ni), q, rng_range(&rg, 1.2f, 2.2f));
         k++;
     }
@@ -2206,6 +2600,1134 @@ static void scenery_baja(Track *tr) {
     }
 }
 
+/* ---------- Cumbres Nevadas: recta baja en el valle y cordillera al sur ---------- */
+
+static void chalet(Mesh *m, V3 c, V3 f) {
+    V3 r = v3(-f.z, 0, f.x);
+    Col wood = col(150, 100, 64), stone = col(170, 166, 160), roof = col(80, 70, 66);
+    mesh_obox(m, c, r, f, 6, 8, 2.5f, stone, stone);
+    mesh_obox(m, vadd(c, v3(0, 2.5f, 0)), r, f, 6, 8, 4, wood, wood);
+    gable_roof(m, vadd(c, v3(0, 0, 0)), f, r, 8, 6, 6.5f, 4.5f, roof, wood);
+    /* nieve en el tejado */
+    gable_roof(m, vadd(c, v3(0, 0.25f, 0)), f, r, 7.2f, 5.6f, 6.5f, 4.4f, col(240, 242, 248), wood);
+}
+
+static void add_cordillera_sur(Track *tr) {
+    Mesh *m = &tr->world;
+    Rng rg = {4810};
+    float zc = tr->center.z + tr->extent + 900.0f;
+    float xs = tr->center.x - 2600.0f, xe = tr->center.x + 2600.0f;
+    int k, S = 22;
+    for (k = 0; k < S; k++) {
+        float x0 = lerpf(xs, xe, (float)k / S), x1 = lerpf(xs, xe, (float)(k + 1) / S), xm = (x0 + x1) * 0.5f;
+        float h = rng_range(&rg, 650, 1150) * (0.7f + 0.3f * sinf(k * 0.6f));
+        float zz = zc + rng_range(&rg, -150, 250);
+        V3 a = v3(x0 - 120, -2, zz - 600), b = v3(x1 + 120, -2, zz - 600);
+        V3 a2 = v3(x0 - 120, -2, zz + 500), b2 = v3(x1 + 120, -2, zz + 500);
+        V3 top = v3(xm + rng_range(&rg, -60, 60), h, zz);
+        V3 sa = vlerp(top, a, 0.42f), sb = vlerp(top, b, 0.42f);
+        Col rock = (k & 1) ? col(96, 104, 120) : col(106, 112, 128);
+        /* cara norte (la que se ve desde el circuito): roca abajo, nieve arriba */
+        mesh_quad_flat(m, a, b, sb, sa, rock);
+        mesh_tri_flat(m, sa, sb, top, (k & 1) ? col(244, 246, 252) : col(230, 234, 244));
+        mesh_tri_flat(m, b, b2, top, col_shade(rock, 0.85f));
+        mesh_tri_flat(m, a2, a, top, col_shade(rock, 0.9f));
+    }
+    /* estribaciones boscosas entre el circuito y la cordillera */
+    for (k = 0; k < 14; k++) {
+        V3 b = v3(lerpf(xs + 400, xe - 400, k / 13.0f) + rng_range(&rg, -80, 80), -1, zc - 650 + rng_range(&rg, -60, 60));
+        mesh_cone(m, b, rng_range(&rg, 220, 340), rng_range(&rg, 160, 300), 8, (k & 1) ? col(46, 96, 62) : col(54, 104, 66));
+    }
+}
+
+static void scenery_cumbres(Track *tr) {
+    Rng rg = {2212};
+    int k, tries;
+    /* gradas y boxes a lo largo de la recta principal (el punto mas bajo) */
+    {
+        int i0 = 14;
+        V3 rr = tr->r[i0], ff = vnorm(v3(tr->t[i0].x, 0, tr->t[i0].z));
+        /* la recta va de oeste a este; el exterior (norte) queda a la izquierda */
+        float side_out = rr.z < 0 ? 1.0f : -1.0f;
+        grada(chunk_mesh(tr, i0 + 30), &rg, at(tr, i0 + 30, side_out * (tr->wall + 4.0f), 0), vscale(rr, -side_out), ff, 60.0f);
+        grada(chunk_mesh(tr, i0 + 70), &rg, at(tr, i0 + 70, side_out * (tr->wall + 4.0f), 0), vscale(rr, -side_out), ff, 50.0f);
+        boxes_y_torre(chunk_mesh(tr, i0 + 50), at(tr, i0 + 50, -side_out * (tr->wall + 22.0f), 0), vscale(rr, side_out), ff, 60.0f);
+    }
+    /* chalets en la zona alta del sur */
+    for (k = 0, tries = 0; k < 9 && tries < 600; tries++) {
+        int i = rng_u(&rg) % tr->n, ni;
+        V3 q = at(tr, i, ((rng_u(&rg) & 1) ? 1 : -1) * (tr->wall + rng_range(&rg, 40, 110)), 0);
+        if (tr->p[i].y < 8.0f) continue;
+        q.y = 0;
+        if (min_dist_xz(tr, q, &ni) < tr->wall + 16 + tr->p[ni].y * 2.2f) continue;
+        chalet(chunk_mesh(tr, ni), q, tr->t[ni]);
+        k++;
+    }
+    /* bosque de pinos, mas denso en el lado sur */
+    for (k = 0, tries = 0; k < 340 && tries < 8000; tries++) {
+        int i = rng_u(&rg) % tr->n, ni;
+        V3 q = at(tr, i, ((rng_u(&rg) & 1) ? 1 : -1) * (tr->wall + rng_range(&rg, 4, 120)), 0);
+        q.y = 0;
+        if (min_dist_xz(tr, q, &ni) < tr->wall + 4 + tr->p[ni].y * 2.2f) continue;
+        if (tr->p[ni].y < 3.0f && (rng_u(&rg) % 3)) continue;
+        tree_pine(chunk_mesh(tr, ni), q, rng_range(&rg, 1.0f, 1.8f));
+        k++;
+    }
+    /* manchas de nieve en la parte alta */
+    for (k = 0, tries = 0; k < 40 && tries < 2000; tries++) {
+        int i = rng_u(&rg) % tr->n, ni;
+        V3 q = at(tr, i, ((rng_u(&rg) & 1) ? 1 : -1) * (tr->wall + rng_range(&rg, 10, 100)), 0);
+        float R = rng_range(&rg, 4, 12);
+        int s;
+        if (tr->p[i].y < 12.0f) continue;
+        q.y = 0.06f;
+        if (min_dist_xz(tr, q, &ni) < tr->wall + R + 4 + tr->p[ni].y * 2.2f) continue;
+        for (s = 0; s < 7; s++) {
+            float a0 = 2 * (float)M_PI * s / 7, a1 = 2 * (float)M_PI * (s + 1) / 7;
+            mesh_tri_flat(chunk_mesh(tr, ni), q, v3(q.x + cosf(a0) * R, 0.06f, q.z + sinf(a0) * R), v3(q.x + cosf(a1) * R, 0.06f, q.z + sinf(a1) * R), col(236, 240, 246));
+        }
+        k++;
+    }
+}
+
+/* ---------- Parque Fundidora: patrimonio industrial, lago, canal y el cerro de dos jorobas ---------- */
+
+static void alto_horno(Mesh *m, V3 c) {
+    Col rust = col(132, 72, 48), rust2 = col(110, 60, 42), steel = col(90, 90, 96);
+    int k;
+    /* cuerpo del horno */
+    mesh_prism(m, c, 9.0f, 34.0f, 10, rust, rust2);
+    mesh_prism(m, vadd(c, v3(0, 34, 0)), 6.0f, 14.0f, 10, rust2, rust2);
+    mesh_prism(m, vadd(c, v3(0, 48, 0)), 3.0f, 22.0f, 8, steel, steel);
+    /* estructura de vigas alrededor */
+    for (k = 0; k < 4; k++) {
+        float a = k * 1.5708f + 0.785f;
+        V3 p = v3(c.x + cosf(a) * 14, c.y, c.z + sinf(a) * 14);
+        mesh_obox(m, p, v3(1, 0, 0), v3(0, 0, 1), 0.6f, 0.6f, 52, steel, steel);
+    }
+    mesh_box(m, v3(c.x - 15, c.y + 30, c.z - 15), v3(c.x + 15, c.y + 31.2f, c.z + 15), steel, steel);
+    mesh_box(m, v3(c.x - 15, c.y + 50, c.z - 15), v3(c.x + 15, c.y + 51.2f, c.z + 15), steel, steel);
+    /* estufas (torres cilindricas) en fila */
+    for (k = 0; k < 4; k++) {
+        V3 s = v3(c.x + 26 + k * 11.0f, c.y, c.z + 6);
+        mesh_prism(m, s, 4.6f, 38, 10, col(160, 150, 140), col(130, 120, 110));
+        mesh_cone(m, vadd(s, v3(0, 38, 0)), 4.6f, 4.0f, 10, col(130, 120, 110));
+    }
+    /* tuberia que une las estufas con el horno */
+    mesh_box(m, v3(c.x + 8, c.y + 26, c.z + 4.6f), v3(c.x + 66, c.y + 29, c.z + 7.4f), rust2, rust2);
+    /* rampa de carga inclinada */
+    {
+        V3 a = v3(c.x - 6, c.y + 46, c.z - 6), b = v3(c.x - 70, c.y, c.z - 40);
+        V3 side = vscale(vnorm(vcross(vsub(b, a), v3(0, 1, 0))), 1.6f);
+        mesh_quad(m, vadd(a, side), vsub(a, side), vsub(b, side), vadd(b, side), steel);
+    }
+}
+
+static void chimenea(Mesh *m, V3 p, float h) {
+    mesh_prism(m, p, 3.0f, h, 8, col(150, 70, 52), col(150, 70, 52));
+    mesh_prism(m, vadd(p, v3(0, h - 3, 0)), 3.4f, 3.0f, 8, col(120, 56, 42), col(60, 50, 46));
+}
+
+/* nave industrial de ladrillo con techo en dientes de sierra */
+static void nave(Mesh *m, V3 c, V3 f, float hw, float hl) {
+    V3 r = v3(-f.z, 0, f.x);
+    Col brick = col(170, 82, 60), dark = col(70, 60, 56), roof = col(120, 120, 126);
+    int k, n = (int)(hl / 6.0f);
+    mesh_obox(m, c, r, f, hw, hl, 11, brick, brick);
+    for (k = 0; k < n; k++) {
+        float z0 = -hl + k * (2 * hl / n), z1 = z0 + 2 * hl / n;
+        V3 a0 = lp(c, r, f, -hw, 11, z0), a1 = lp(c, r, f, hw, 11, z0);
+        V3 b0 = lp(c, r, f, -hw, 15, z1), b1 = lp(c, r, f, hw, 15, z1);
+        V3 c0 = lp(c, r, f, -hw, 11, z1), c1 = lp(c, r, f, hw, 11, z1);
+        mesh_quad(m, a0, a1, b1, b0, roof);
+        mesh_quad_flat(m, c0, c1, b1, b0, col(150, 170, 190));
+    }
+    for (k = 0; k < n; k++) {
+        float z = -hl + 3 + k * (2 * hl / n);
+        int s;
+        for (s = -1; s <= 1; s += 2)
+            mesh_quad_flat(m, lp(c, r, f, s * (hw + 0.05f), 3, z - 1.2f), lp(c, r, f, s * (hw + 0.05f), 3, z + 1.2f),
+                           lp(c, r, f, s * (hw + 0.05f), 8, z + 1.2f), lp(c, r, f, s * (hw + 0.05f), 8, z - 1.2f), dark);
+    }
+}
+
+static void torre_ciudad(Mesh *m, Rng *rg, V3 p) {
+    static const int pal[][3] = {{180, 196, 210}, {120, 140, 160}, {210, 210, 214}, {90, 110, 130}, {200, 190, 170}};
+    const int *c = pal[rng_u(rg) % 5];
+    float w = rng_range(rg, 14, 26), h = rng_range(rg, 40, 140);
+    float y;
+    mesh_box(m, v3(p.x - w, 0, p.z - w), v3(p.x + w, h, p.z + w), col(c[0], c[1], c[2]), col(110, 110, 116));
+    for (y = 6; y < h - 3; y += 7)
+        mesh_box(m, v3(p.x - w - 0.1f, y, p.z - w - 0.1f), v3(p.x + w + 0.1f, y + 1.6f, p.z + w + 0.1f), col(60, 80, 110), col(60, 80, 110));
+}
+
+static Mesh *near_chunk(Track *tr, V3 q) { int ni; min_dist_xz(tr, q, &ni); return chunk_mesh(tr, ni); }
+
+static V3 fund_spot(Track *tr, float px, float py, float clear) {
+    /* posicion del mapa, desplazada si queda demasiado cerca de la pista */
+    V3 q = v3(FUN_X(px), 0, FUN_Z(py));
+    int k = 0;
+    while (min_dist_xz(tr, q, NULL) < tr->wall + clear && k < 40) {
+        V3 d = vnorm(v3(q.x - tr->center.x, 0, q.z - tr->center.z));
+        q = vsub(q, vscale(d, 6.0f));
+        k++;
+    }
+    return q;
+}
+
+static void scenery_fundidora(Track *tr) {
+    Rng rg = {1900};
+    int k, tries;
+    /* alto horno y chimeneas */
+    {
+        V3 h = fund_spot(tr, 300, 345, 70);
+        alto_horno(near_chunk(tr, h), h);
+        chimenea(near_chunk(tr, h), vadd(h, v3(-35, 0, 30)), 55);
+    }
+    {
+        V3 q;
+        q = fund_spot(tr, 215, 160, 40); nave(near_chunk(tr, q), q, vnorm(v3(0.8f, 0, 0.6f)), 14, 46);
+        chimenea(near_chunk(tr, q), vadd(q, v3(30, 0, -40)), 48);
+        q = fund_spot(tr, 240, 285, 30); nave(near_chunk(tr, q), q, v3(1, 0, 0), 12, 26);
+        q = fund_spot(tr, 285, 300, 30); nave(near_chunk(tr, q), q, v3(1, 0, 0), 12, 24);
+        q = fund_spot(tr, 430, 355, 30); nave(near_chunk(tr, q), q, v3(1, 0, 0), 12, 30);
+        chimenea(near_chunk(tr, q), vadd(q, v3(0, 0, -30)), 44);
+    }
+    /* lago */
+    {
+        V3 c = fund_spot(tr, 450, 130, 40);
+        Mesh *m = near_chunk(tr, c);
+        float R = 60;
+        for (k = 0; k < 14; k++) {
+            float a0 = 2 * (float)M_PI * k / 14, a1 = 2 * (float)M_PI * (k + 1) / 14;
+            float r0 = R * (1.0f + 0.25f * cosf(a0 * 2)), r1 = R * (1.0f + 0.25f * cosf(a1 * 2));
+            mesh_tri_flat(m, v3(c.x, 0.08f, c.z), v3(c.x + cosf(a0) * r0 * 1.4f, 0.08f, c.z + sinf(a0) * r0 * 0.7f),
+                          v3(c.x + cosf(a1) * r1 * 1.4f, 0.08f, c.z + sinf(a1) * r1 * 0.7f), col(70, 130, 170));
+        }
+    }
+    /* auditorio moderno (fuera del circuito, al este) */
+    {
+        V3 a = fund_spot(tr, 440, 280, 40);
+        Mesh *m = near_chunk(tr, a);
+        mesh_prism(m, a, 34, 16, 12, col(220, 222, 226), col(200, 204, 210));
+        mesh_prism(m, vadd(a, v3(0, 16, 0)), 26, 5, 12, col(180, 190, 200), col(200, 204, 210));
+    }
+    /* canal al sur */
+    {
+        float z = 0;
+        int i;
+        for (i = 0; i < tr->n; i++) if (tr->p[i].z > z) z = tr->p[i].z;
+        z += tr->wall + 30;
+        for (k = 0; k < 30; k++) {
+            float x0 = tr->center.x - 900 + k * 60;
+            Mesh *m = near_chunk(tr, v3(x0, 0, z));
+            mesh_quad_flat(m, v3(x0, 0.06f, z), v3(x0 + 60, 0.06f, z), v3(x0 + 60, 0.06f, z + 14), v3(x0, 0.06f, z + 14), col(60, 120, 150));
+            mesh_quad_flat(m, v3(x0, 0.05f, z - 4), v3(x0 + 60, 0.05f, z - 4), v3(x0 + 60, 0.05f, z), v3(x0, 0.05f, z), col(186, 176, 160));
+            mesh_quad_flat(m, v3(x0, 0.05f, z + 14), v3(x0 + 60, 0.05f, z + 14), v3(x0 + 60, 0.05f, z + 18), v3(x0, 0.05f, z + 18), col(186, 176, 160));
+        }
+    }
+    /* grandes recintos de exposiciones al oeste y torres de la ciudad alrededor */
+    {
+        V3 q = fund_spot(tr, 40, 120, 40);
+        mesh_box(near_chunk(tr, q), v3(q.x - 50, 0, q.z - 70), v3(q.x + 50, 16, q.z + 70), col(200, 200, 204), col(170, 172, 178));
+        q = fund_spot(tr, 40, 270, 40);
+        mesh_box(near_chunk(tr, q), v3(q.x - 50, 0, q.z - 60), v3(q.x + 50, 14, q.z + 60), col(206, 206, 210), col(172, 174, 180));
+    }
+    for (k = 0, tries = 0; k < 26 && tries < 600; tries++) {
+        float a = rng_range(&rg, 0, 6.28f), R = tr->extent + rng_range(&rg, 140, 420);
+        V3 q = v3(tr->center.x + cosf(a) * R, 0, tr->center.z + sinf(a) * R);
+        if (sinf(a) > 0.3f) continue;   /* al sur queda el canal y el cerro */
+        if (min_dist_xz(tr, q, NULL) < tr->wall + 60) continue;
+        torre_ciudad(near_chunk(tr, q), &rg, q);
+        k++;
+    }
+    /* mucho arbol en el parque */
+    scatter_trees(tr, &rg, 420, 0, 4, 90);
+    lamp_posts(tr, 18);
+}
+
+static void add_silla(Track *tr) {
+    Mesh *m = &tr->world;
+    /* cerro de dos jorobas al sureste, muy presente */
+    float xc = tr->center.x + 1500.0f, zc = tr->center.z + 1300.0f;
+    static const float prof[] = {0, 260, 520, 760, 820, 640, 560, 700, 880, 760, 480, 200, 0};
+    int k;
+    V3 axis = vnorm(v3(-0.6f, 0, 1.0f)), nrm = v3(-axis.z, 0, axis.x);
+    for (k = 0; k < 12; k++) {
+        float s0 = -1500 + k * 250.0f, s1 = s0 + 250;
+        V3 c0 = v3(xc + axis.x * s0, prof[k], zc + axis.z * s0), c1 = v3(xc + axis.x * s1, prof[k + 1], zc + axis.z * s1);
+        V3 a0 = v3(c0.x + nrm.x * 700, -2, c0.z + nrm.z * 700), a1 = v3(c1.x + nrm.x * 700, -2, c1.z + nrm.z * 700);
+        V3 b0 = v3(c0.x - nrm.x * 700, -2, c0.z - nrm.z * 700), b1 = v3(c1.x - nrm.x * 700, -2, c1.z - nrm.z * 700);
+        V3 m0 = vlerp(c0, a0, 0.4f), m1 = vlerp(c1, a1, 0.4f);
+        mesh_quad_flat(m, a0, a1, m1, m0, (k & 1) ? col(84, 110, 74) : col(92, 118, 80));
+        mesh_quad_flat(m, m0, m1, c1, c0, (k & 1) ? col(126, 126, 124) : col(136, 134, 130));
+        mesh_quad_flat(m, b0, b1, c1, c0, col(112, 114, 112));
+    }
+}
+
+/* ---------- Villa Olimpica: estadio, alberca, velodromo, residencias y canchas ---------- */
+
+/* busca un lugar libre para un objeto de medio ancho hw y medio largo hl, con margen a la pista */
+static int villa_spot(Track *tr, Rng *rg, V3 *out, V3 *f, float hw, float hl, float margin, int inside) {
+    int tries;
+    for (tries = 0; tries < 400; tries++) {
+        int i = rng_u(rg) % tr->n;
+        float side = (rng_u(rg) & 1) ? 1.0f : -1.0f;
+        V3 q = at(tr, i, side * (tr->wall + margin + fmaxf(hw, hl) + rng_range(rg, 0, 120)), 0);
+        V3 ff = vnorm(v3(tr->t[i].x, 0, tr->t[i].z)), rr = v3(-ff.z, 0, ff.x);
+        q.y = 0;
+        if (inside >= 0 && inside_loop(tr, q.x, q.z) != inside) continue;
+        if (!footprint_ok(tr, q, rr, ff, -hw, hw, hl, margin)) continue;
+        *out = q; *f = ff;
+        return 1;
+    }
+    return 0;
+}
+
+static void estadio(Mesh *m, V3 c) {
+    int k, S = 16;
+    float Rx = 70, Rz = 52;
+    Col conc = col(214, 214, 220), seat1 = col(220, 70, 60), seat2 = col(60, 110, 200);
+    /* campo y pista de atletismo */
+    for (k = 0; k < S; k++) {
+        float a0 = 2 * (float)M_PI * k / S, a1 = 2 * (float)M_PI * (k + 1) / S;
+        V3 o0 = v3(c.x + cosf(a0) * Rx * 0.78f, 0.06f, c.z + sinf(a0) * Rz * 0.78f), o1 = v3(c.x + cosf(a1) * Rx * 0.78f, 0.06f, c.z + sinf(a1) * Rz * 0.78f);
+        V3 i0 = v3(c.x + cosf(a0) * Rx * 0.62f, 0.07f, c.z + sinf(a0) * Rz * 0.62f), i1 = v3(c.x + cosf(a1) * Rx * 0.62f, 0.07f, c.z + sinf(a1) * Rz * 0.62f);
+        mesh_quad_flat(m, o0, o1, i1, i0, col(196, 80, 60));
+        mesh_tri_flat(m, v3(c.x, 0.08f, c.z), i0, i1, col(70, 160, 80));
+    }
+    /* anillo de gradas en tres niveles */
+    for (k = 0; k < S; k++) {
+        float a0 = 2 * (float)M_PI * k / S, a1 = 2 * (float)M_PI * (k + 1) / S;
+        int t;
+        for (t = 0; t < 3; t++) {
+            float r0 = 0.80f + t * 0.08f, r1 = r0 + 0.08f, y0 = 1.5f + t * 6.0f, y1 = y0 + 6.0f;
+            V3 a = v3(c.x + cosf(a0) * Rx * r0, y0, c.z + sinf(a0) * Rz * r0), b = v3(c.x + cosf(a1) * Rx * r0, y0, c.z + sinf(a1) * Rz * r0);
+            V3 a2 = v3(c.x + cosf(a0) * Rx * r1, y1, c.z + sinf(a0) * Rz * r1), b2 = v3(c.x + cosf(a1) * Rx * r1, y1, c.z + sinf(a1) * Rz * r1);
+            mesh_quad(m, a, b, b2, a2, (k + t) & 1 ? seat1 : seat2);
+        }
+        {
+            V3 a = v3(c.x + cosf(a0) * Rx * 1.04f, 0, c.z + sinf(a0) * Rz * 1.04f), b = v3(c.x + cosf(a1) * Rx * 1.04f, 0, c.z + sinf(a1) * Rz * 1.04f);
+            mesh_quad(m, a, b, vadd(b, v3(0, 21, 0)), vadd(a, v3(0, 21, 0)), conc);
+            /* cubierta */
+            mesh_quad(m, vadd(a, v3(0, 21, 0)), vadd(b, v3(0, 21, 0)),
+                      v3(c.x + cosf(a1) * Rx * 0.86f, 24, c.z + sinf(a1) * Rz * 0.86f), v3(c.x + cosf(a0) * Rx * 0.86f, 24, c.z + sinf(a0) * Rz * 0.86f), col(240, 240, 244));
+        }
+    }
+    /* pebetero */
+    {
+        V3 t = v3(c.x + Rx * 1.15f, 0, c.z);
+        mesh_prism(m, t, 2.0f, 30, 6, col(200, 200, 206), col(200, 200, 206));
+        mesh_cone(m, vadd(t, v3(0, 34, 0)), 4.5f, -4.0f, 8, col(220, 180, 60));
+        mesh_cone(m, vadd(t, v3(0, 34, 0)), 3.0f, 6.0f, 6, col(255, 140, 30));
+        mesh_cone(m, vadd(t, v3(0, 34, 0)), 1.6f, 9.0f, 5, col(255, 220, 80));
+    }
+}
+
+static void alberca_olimpica(Mesh *m, V3 c, V3 f) {
+    V3 r = v3(-f.z, 0, f.x);
+    int k, S = 8;
+    Col glass = col(120, 170, 210), wall = col(236, 238, 242);
+    mesh_obox(m, c, r, f, 30, 45, 9, glass, wall);
+    /* techo curvo */
+    for (k = 0; k < S; k++) {
+        float a0 = (float)M_PI * k / S, a1 = (float)M_PI * (k + 1) / S;
+        V3 p0 = lp(c, r, f, -cosf(a0) * 30, 9 + sinf(a0) * 9, -45), p1 = lp(c, r, f, -cosf(a1) * 30, 9 + sinf(a1) * 9, -45);
+        V3 q0 = lp(c, r, f, -cosf(a0) * 30, 9 + sinf(a0) * 9, 45), q1 = lp(c, r, f, -cosf(a1) * 30, 9 + sinf(a1) * 9, 45);
+        mesh_quad(m, p0, p1, q1, q0, wall);
+        mesh_tri(m, lp(c, r, f, -cosf(a0) * 30, 9, -45), p0, p1, glass);
+        mesh_tri(m, lp(c, r, f, -cosf(a0) * 30, 9, 45), q0, q1, glass);
+    }
+}
+
+static void velodromo(Mesh *m, V3 c) {
+    int k, S = 14;
+    for (k = 0; k < S; k++) {
+        float a0 = 2 * (float)M_PI * k / S, a1 = 2 * (float)M_PI * (k + 1) / S;
+        V3 a = v3(c.x + cosf(a0) * 45, 0, c.z + sinf(a0) * 30), b = v3(c.x + cosf(a1) * 45, 0, c.z + sinf(a1) * 30);
+        V3 a2 = v3(c.x + cosf(a0) * 38, 14, c.z + sinf(a0) * 24), b2 = v3(c.x + cosf(a1) * 38, 14, c.z + sinf(a1) * 24);
+        mesh_quad(m, a, b, b2, a2, col(200, 206, 214));
+        mesh_tri(m, a2, b2, v3(c.x, 18, c.z), col(170, 180, 196));
+    }
+}
+
+static void residencia(Mesh *m, Rng *rg, V3 c, V3 f) {
+    static const int pal[][3] = {{230, 230, 236}, {240, 220, 180}, {200, 220, 236}, {236, 200, 196}};
+    const int *p = pal[rng_u(rg) % 4];
+    V3 r = v3(-f.z, 0, f.x);
+    float h = rng_range(rg, 24, 46), y;
+    Col wall = col(p[0], p[1], p[2]);
+    mesh_obox(m, c, r, f, 8, 22, h, wall, col(150, 150, 156));
+    for (y = 3; y < h - 2; y += 3.2f) {
+        int s;
+        for (s = -1; s <= 1; s += 2)
+            mesh_quad_flat(m, lp(c, r, f, s * 8.05f, y, -20.5f), lp(c, r, f, s * 8.05f, y, 20.5f), lp(c, r, f, s * 8.05f, y + 1.4f, 20.5f), lp(c, r, f, s * 8.05f, y + 1.4f, -20.5f), col(70, 96, 130));
+    }
+}
+
+static void cancha(Mesh *m, V3 c, V3 f, float hw, float hl, Col piso, Col linea) {
+    V3 r = v3(-f.z, 0, f.x);
+    mesh_quad_flat(m, lp(c, r, f, -hw, 0.06f, -hl), lp(c, r, f, hw, 0.06f, -hl), lp(c, r, f, hw, 0.06f, hl), lp(c, r, f, -hw, 0.06f, hl), piso);
+    mesh_quad_flat(m, lp(c, r, f, -hw, 0.08f, -0.2f), lp(c, r, f, hw, 0.08f, -0.2f), lp(c, r, f, hw, 0.08f, 0.2f), lp(c, r, f, -hw, 0.08f, 0.2f), linea);
+}
+
+static void banderas(Mesh *m, V3 c, V3 f, int n) {
+    static const int pal[][3] = {{220, 40, 50}, {40, 90, 200}, {250, 210, 40}, {40, 160, 80}, {250, 250, 250}, {240, 130, 40}};
+    V3 r = v3(-f.z, 0, f.x);
+    int k;
+    for (k = 0; k < n; k++) {
+        V3 p = lp(c, r, f, 0, 0, (k - n * 0.5f) * 5.0f);
+        const int *cc = pal[k % 6];
+        mesh_prism(m, p, 0.12f, 10, 4, col(220, 220, 226), col(220, 220, 226));
+        mesh_quad_flat(m, vadd(p, v3(0, 7.5f, 0)), vadd(p, vadd(vscale(r, 3.0f), v3(0, 7.5f, 0))), vadd(p, vadd(vscale(r, 3.0f), v3(0, 9.6f, 0))), vadd(p, v3(0, 9.6f, 0)), col(cc[0], cc[1], cc[2]));
+    }
+}
+
+static void scenery_villa(Track *tr) {
+    Rng rg = {2028};
+    V3 q, f;
+    int k;
+    /* estadio olimpico dentro del circuito si cabe, si no afuera */
+    if (villa_spot(tr, &rg, &q, &f, 80, 60, 12, 1) || villa_spot(tr, &rg, &q, &f, 80, 60, 12, -1))
+        estadio(near_chunk(tr, q), q);
+    if (villa_spot(tr, &rg, &q, &f, 32, 47, 12, -1)) alberca_olimpica(near_chunk(tr, q), q, f);
+    if (villa_spot(tr, &rg, &q, &f, 47, 47, 12, -1)) velodromo(near_chunk(tr, q), q);
+    for (k = 0; k < 12; k++)
+        if (villa_spot(tr, &rg, &q, &f, 10, 24, 14, 0)) residencia(near_chunk(tr, q), &rg, q, f);
+    for (k = 0; k < 8; k++) {
+        if (!villa_spot(tr, &rg, &q, &f, 20, 32, 6, -1)) continue;
+        if (k & 1) cancha(near_chunk(tr, q), q, f, 20, 32, col(70, 160, 80), col(240, 240, 240));
+        else cancha(near_chunk(tr, q), q, f, 11, 18, col(60, 110, 170), col(240, 240, 240));
+    }
+    for (k = 0; k < 3; k++)
+        if (villa_spot(tr, &rg, &q, &f, 4, 26, 6, -1)) banderas(near_chunk(tr, q), q, f, 10);
+    /* gradas junto a la recta de salida y boxes */
+    {
+        int i0 = 12;
+        V3 rr = tr->r[i0], ff = vnorm(v3(tr->t[i0].x, 0, tr->t[i0].z));
+        V3 rel = vsub(tr->p[i0], tr->center);
+        float side_out = (rr.x * rel.x + rr.z * rel.z) > 0 ? 1.0f : -1.0f;
+        grada(chunk_mesh(tr, i0 + 20), &rg, at(tr, i0 + 20, side_out * (tr->wall + 4.0f), 0), vscale(rr, -side_out), ff, 50.0f);
+        boxes_y_torre(chunk_mesh(tr, i0 + 30), at(tr, i0 + 30, -side_out * (tr->wall + 22.0f), 0), vscale(rr, side_out), ff, 50.0f);
+    }
+    scatter_trees(tr, &rg, 220, 0, 5, 80);
+    lamp_posts(tr, 16);
+}
+
+/* ---------- Parque acuatico en ladera: albercas en terrazas, toboganes y rio lento ---------- */
+
+/* altura minima y maxima del terreno bajo un rectangulo */
+static void ground_range(const Track *tr, V3 c, V3 r, V3 f, float hw, float hl, float *hmin, float *hmax) {
+    float x, z;
+    *hmin = 1e9f; *hmax = -1e9f;
+    for (x = -hw; x <= hw + 0.01f; x += hw) for (z = -hl; z <= hl + 0.01f; z += hl) {
+        float h = terrain_h(tr, c.x + r.x * x + f.x * z, c.z + r.z * x + f.z * z);
+        if (h < *hmin) *hmin = h;
+        if (h > *hmax) *hmax = h;
+    }
+}
+
+/* alberca nivelada sobre una terraza (la base absorbe la pendiente) */
+static void alberca(Track *tr, Mesh *m, V3 c, V3 f, float hw, float hl, Col agua) {
+    V3 r = v3(-f.z, 0, f.x);
+    float hmin, hmax, top;
+    int k;
+    ground_range(tr, c, r, f, hw + 3, hl + 3, &hmin, &hmax);
+    top = hmax + 0.4f;
+    c.y = hmin - 0.5f;
+    mesh_obox(m, c, r, f, hw + 3, hl + 3, top - c.y, col(206, 196, 176), col(232, 226, 210));
+    c.y = top + 0.02f;
+    mesh_quad_flat(m, lp(c, r, f, -hw, 0, -hl), lp(c, r, f, hw, 0, -hl), lp(c, r, f, hw, 0, hl), lp(c, r, f, -hw, 0, hl), agua);
+    for (k = 1; k < (int)(hw / 2.5f); k++) {
+        float x = -hw + k * 5.0f;
+        if (x >= hw) break;
+        mesh_quad_flat(m, lp(c, r, f, x - 0.1f, 0.01f, -hl + 1), lp(c, r, f, x + 0.1f, 0.01f, -hl + 1), lp(c, r, f, x + 0.1f, 0.01f, hl - 1), lp(c, r, f, x - 0.1f, 0.01f, hl - 1), col_shade(agua, 1.15f));
+    }
+    /* camastros y sombrillas en la orilla */
+    for (k = 0; k < 4; k++) {
+        V3 p = lp(c, r, f, hw + 1.6f, -0.02f, -hl + 2 + k * (2 * hl - 4) / 3.0f);
+        mesh_obox(m, p, r, f, 0.4f, 1.0f, 0.4f, col(250, 250, 250), col(250, 250, 250));
+        mesh_prism(m, vadd(p, v3(0.8f, 0, 0)), 0.06f, 2.4f, 4, col(200, 200, 200), col(200, 200, 200));
+        mesh_cone(m, vadd(p, v3(0.8f, 2.4f, 0)), 1.6f, 0.6f, 8, (k & 1) ? col(240, 90, 60) : col(60, 150, 230));
+    }
+}
+
+/* torre de toboganes con tubos en espiral hasta una alberca de llegada */
+static void toboganes(Track *tr, Mesh *m, V3 c) {
+    static const int pal[][3] = {{250, 200, 30}, {40, 120, 230}, {230, 60, 60}};
+    float base = terrain_h(tr, c.x, c.z);
+    int t, k;
+    V3 b = v3(c.x, base, c.z);
+    mesh_obox(m, b, v3(1, 0, 0), v3(0, 0, 1), 3.5f, 3.5f, 20, col(230, 230, 236), col(120, 160, 200));
+    mesh_obox(m, vadd(b, v3(0, 20, 0)), v3(1, 0, 0), v3(0, 0, 1), 4.5f, 4.5f, 0.6f, col(200, 200, 206), col(200, 200, 206));
+    mesh_cone(m, vadd(b, v3(0, 23, 0)), 5.5f, 3.0f, 8, col(240, 120, 40));
+    for (k = 0; k < 4; k++) mesh_obox(m, vadd(b, v3((k & 1) ? 4.2f : -4.2f, 20.6f, (k & 2) ? 4.2f : -4.2f)), v3(1, 0, 0), v3(0, 0, 1), 0.2f, 0.2f, 2.4f, col(200, 200, 206), col(200, 200, 206));
+    for (t = 0; t < 3; t++) {
+        const int *cc = pal[t];
+        Col cl = col(cc[0], cc[1], cc[2]);
+        float R = 7.0f + t * 4.0f, a = t * 2.1f;
+        V3 prev = v3(b.x + cosf(a) * R, base + 19.5f - t * 2, b.z + sinf(a) * R);
+        for (k = 1; k <= 16; k++) {
+            float aa = a + k * 0.55f, yy = base + 19.5f - t * 2 - k * (17.0f - t * 2) / 16.0f;
+            V3 p = v3(b.x + cosf(aa) * (R + k * 0.6f), yy, b.z + sinf(aa) * (R + k * 0.6f));
+            V3 d = vsub(p, prev), side = vscale(vnorm(vcross(d, v3(0, 1, 0))), 0.9f);
+            mesh_quad(m, vadd(prev, side), vsub(prev, side), vsub(p, side), vadd(p, side), cl);
+            mesh_quad(m, vadd(prev, side), vadd(p, side), vadd(vadd(p, side), v3(0, 0.7f, 0)), vadd(vadd(prev, side), v3(0, 0.7f, 0)), col_shade(cl, 0.8f));
+            mesh_quad(m, vsub(prev, side), vsub(p, side), vadd(vsub(p, side), v3(0, 0.7f, 0)), vadd(vsub(prev, side), v3(0, 0.7f, 0)), col_shade(cl, 0.8f));
+            if (k % 4 == 0) mesh_prism(m, v3(p.x, terrain_h(tr, p.x, p.z), p.z), 0.25f, p.y - terrain_h(tr, p.x, p.z), 4, col(210, 210, 214), col(210, 210, 214));
+            prev = p;
+        }
+    }
+}
+
+static void palapa(Track *tr, Mesh *m, V3 p) {
+    p.y = terrain_h(tr, p.x, p.z);
+    mesh_prism(m, p, 0.25f, 3.2f, 5, col(130, 96, 60), col(130, 96, 60));
+    mesh_cone(m, vadd(p, v3(0, 3.0f, 0)), 3.4f, 1.8f, 8, col(206, 176, 110));
+}
+
+/* rio lento: anillo de agua alrededor de una isla con palmeras */
+static void rio_lento(Track *tr, Mesh *m, V3 c, float R) {
+    int k, S = 16;
+    for (k = 0; k < S; k++) {
+        float a0 = 2 * (float)M_PI * k / S, a1 = 2 * (float)M_PI * (k + 1) / S;
+        V3 o0 = v3(c.x + cosf(a0) * R, 0, c.z + sinf(a0) * R * 0.7f), o1 = v3(c.x + cosf(a1) * R, 0, c.z + sinf(a1) * R * 0.7f);
+        V3 i0 = v3(c.x + cosf(a0) * (R - 7), 0, c.z + sinf(a0) * (R - 7) * 0.7f), i1 = v3(c.x + cosf(a1) * (R - 7), 0, c.z + sinf(a1) * (R - 7) * 0.7f);
+        o0.y = terrain_h(tr, o0.x, o0.z) + 0.12f; o1.y = terrain_h(tr, o1.x, o1.z) + 0.12f;
+        i0.y = terrain_h(tr, i0.x, i0.z) + 0.12f; i1.y = terrain_h(tr, i1.x, i1.z) + 0.12f;
+        mesh_quad_flat(m, o0, o1, i1, i0, col(60, 170, 220));
+    }
+    for (k = 0; k < 5; k++) {
+        V3 q = v3(c.x + cosf(k * 1.25f) * (R - 14) * 0.6f, 0, c.z + sinf(k * 1.25f) * (R - 14) * 0.4f);
+        q.y = terrain_h(tr, q.x, q.z);
+        palmera(m, q, 1.0f);
+    }
+}
+
+static void scenery_aztlan(Track *tr) {
+    Rng rg = {1325};
+    V3 q, f;
+    int k;
+    /* gran alberca de olas y rio lento dentro del circuito */
+    if (villa_spot(tr, &rg, &q, &f, 26, 40, 12, 1)) alberca(tr, near_chunk(tr, q), q, f, 22, 36, col(40, 150, 220));
+    if (villa_spot(tr, &rg, &q, &f, 50, 40, 10, 1)) rio_lento(tr, near_chunk(tr, q), q, 46);
+    /* torres de toboganes */
+    for (k = 0; k < 3; k++)
+        if (villa_spot(tr, &rg, &q, &f, 26, 26, 12, k == 0 ? 1 : -1)) {
+            toboganes(tr, near_chunk(tr, q), q);
+            alberca(tr, near_chunk(tr, q), vadd(q, vscale(f, 20)), f, 6, 6, col(50, 180, 230));
+        }
+    /* albercas en terrazas por todo el parque */
+    for (k = 0; k < 10; k++)
+        if (villa_spot(tr, &rg, &q, &f, 14, 20, 8, -1)) alberca(tr, near_chunk(tr, q), q, f, rng_range(&rg, 7, 11), rng_range(&rg, 10, 16), (k & 1) ? col(60, 170, 230) : col(80, 200, 220));
+    /* palapas y palmeras */
+    for (k = 0; k < 40; k++)
+        if (villa_spot(tr, &rg, &q, &f, 3.5f, 3.5f, 4, -1)) palapa(tr, near_chunk(tr, q), q);
+    for (k = 0; k < 90; k++)
+        if (villa_spot(tr, &rg, &q, &f, 3, 3, 4, -1)) { q.y = terrain_h(tr, q.x, q.z); palmera(near_chunk(tr, q), q, rng_range(&rg, 0.9f, 1.3f)); }
+    /* gradas en la recta del lado izquierdo (la bajada) */
+    {
+        int i0 = 20;
+        V3 rr = tr->r[i0], ff = vnorm(v3(tr->t[i0].x, 0, tr->t[i0].z));
+        V3 rel = vsub(tr->p[i0], tr->center);
+        float side_out = (rr.x * rel.x + rr.z * rel.z) > 0 ? 1.0f : -1.0f;
+        V3 g = at(tr, i0 + 25, side_out * (tr->wall + 4.0f), 0);
+        g.y = terrain_h(tr, g.x, g.z);
+        grada(chunk_mesh(tr, i0 + 25), &rg, g, vscale(rr, -side_out), ff, 40.0f);
+    }
+}
+
+/* ---------- El Seminario: claustros de tejado rojo, capilla, universidad y colonia ---------- */
+
+/* pabellon de muros claros con tejado rojo, solo si no toca la pista */
+static void pabellon(Track *tr, V3 c, V3 f, float hw, float hl, float h, Col wall, Col roof) {
+    V3 r = v3(-f.z, 0, f.x);
+    Mesh *m;
+    float y;
+    if (!footprint_ok(tr, c, r, f, -hw, hw, hl, 6.0f)) return;
+    m = near_chunk(tr, c);
+    mesh_obox(m, c, r, f, hw, hl, h, wall, wall);
+    gable_roof(m, c, r, f, hw, hl, h, hw * 0.55f, roof, wall);
+    for (y = 2.2f; y < h - 1.0f; y += 3.4f) {
+        int s;
+        for (s = -1; s <= 1; s += 2)
+            mesh_quad_flat(m, lp(c, r, f, s * (hw + 0.05f), y, -hl + 1.5f), lp(c, r, f, s * (hw + 0.05f), y, hl - 1.5f),
+                           lp(c, r, f, s * (hw + 0.05f), y + 1.3f, hl - 1.5f), lp(c, r, f, s * (hw + 0.05f), y + 1.3f, -hl + 1.5f), col(70, 60, 56));
+    }
+}
+
+static void capilla(Track *tr, V3 c, V3 f) {
+    V3 r = v3(-f.z, 0, f.x);
+    Mesh *m;
+    Col wall = col(236, 226, 206), roof = col(170, 70, 50);
+    if (!footprint_ok(tr, c, r, f, -12, 12, 26, 6.0f)) return;
+    m = near_chunk(tr, c);
+    mesh_obox(m, c, r, f, 9, 22, 13, wall, wall);
+    gable_roof(m, c, r, f, 9, 22, 13, 6, roof, wall);
+    /* campanario */
+    mesh_obox(m, lp(c, r, f, 0, 0, 24), r, f, 3.5f, 3.5f, 26, wall, wall);
+    mesh_obox(m, lp(c, r, f, 0, 26, 24), r, f, 3.0f, 3.0f, 5, col(220, 210, 190), col(220, 210, 190));
+    mesh_cone(m, lp(c, r, f, 0, 31, 24), 3.4f, 5.0f, 4, roof);
+    /* cruz sencilla en lo alto */
+    mesh_obox(m, lp(c, r, f, 0, 36, 24), r, f, 0.15f, 0.15f, 3.0f, col(240, 240, 240), col(240, 240, 240));
+    mesh_obox(m, lp(c, r, f, 0, 37.6f, 24), r, f, 1.0f, 0.15f, 0.3f, col(240, 240, 240), col(240, 240, 240));
+    /* portada */
+    mesh_quad_flat(m, lp(c, r, f, -2.5f, 0, 25.6f + 3.6f), lp(c, r, f, 2.5f, 0, 25.6f + 3.6f), lp(c, r, f, 2.5f, 6, 25.6f + 3.6f), lp(c, r, f, -2.5f, 6, 25.6f + 3.6f), col(80, 56, 44));
+}
+
+static void edificio_plano(Track *tr, V3 c, V3 f, float hw, float hl, float h, Col wall, Col top) {
+    V3 r = v3(-f.z, 0, f.x);
+    Mesh *m;
+    float y;
+    if (!footprint_ok(tr, c, r, f, -hw, hw, hl, 6.0f)) return;
+    m = near_chunk(tr, c);
+    mesh_obox(m, c, r, f, hw, hl, h, wall, top);
+    for (y = 2.5f; y < h - 1.0f; y += 3.6f) {
+        int s;
+        for (s = -1; s <= 1; s += 2)
+            mesh_quad_flat(m, lp(c, r, f, s * (hw + 0.05f), y, -hl + 1), lp(c, r, f, s * (hw + 0.05f), y, hl - 1),
+                           lp(c, r, f, s * (hw + 0.05f), y + 1.5f, hl - 1), lp(c, r, f, s * (hw + 0.05f), y + 1.5f, -hl + 1), col(80, 110, 140));
+    }
+}
+
+static void scenery_seminario(Track *tr) {
+    Rng rg = {1950};
+    Col cream = col(236, 226, 206), tile = col(170, 64, 48);
+    V3 ns = vnorm(v3(SEM_X(185) - SEM_X(185), 0, SEM_Z(460) - SEM_Z(200)));   /* eje norte-sur */
+    V3 ew = v3(1, 0, 0);
+    int k;
+    /* claustros: espina norte-sur y alas este-oeste */
+    pabellon(tr, v3(SEM_X(185), 0, SEM_Z(330)), ns, 6, SEM_Z(460) - SEM_Z(330) - 4, 9, cream, tile);
+    {
+        static const float wy[] = {218, 272, 338, 398, 452};
+        for (k = 0; k < 5; k++) {
+            pabellon(tr, v3(SEM_X(145), 0, SEM_Z(wy[k])), ew, 6, SEM_X(180) - SEM_X(145) - 2, 8, cream, tile);
+            if (k != 2) pabellon(tr, v3(SEM_X(222), 0, SEM_Z(wy[k])), ew, 6, SEM_X(262) - SEM_X(222) - 2, 8, cream, tile);
+        }
+    }
+    capilla(tr, v3(SEM_X(240), 0, SEM_Z(325)), vnorm(v3(1, 0, -0.3f)));
+    /* glorieta con fuente frente al seminario */
+    {
+        V3 g = v3(SEM_X(196), 0, SEM_Z(508));
+        if (footprint_ok(tr, g, v3(1, 0, 0), v3(0, 0, 1), -12, 12, 12, 3.0f)) {
+            Mesh *m = near_chunk(tr, g);
+            mesh_prism(m, g, 11, 0.4f, 12, col(200, 196, 186), col(90, 160, 80));
+            mesh_prism(m, g, 4, 0.9f, 10, col(210, 206, 196), col(80, 150, 220));
+            mesh_prism(m, g, 0.6f, 3.0f, 6, col(220, 216, 206), col(220, 216, 206));
+        }
+    }
+    /* edificios de la universidad */
+    edificio_plano(tr, v3(SEM_X(505), 0, SEM_Z(148)), ew, SEM_X(550) - SEM_X(505), 10, 10, col(232, 232, 236), col(170, 172, 178));
+    edificio_plano(tr, v3(SEM_X(400), 0, SEM_Z(252)), ew, SEM_X(438) - SEM_X(400), 12, 12, col(224, 224, 228), col(160, 162, 168));
+    edificio_plano(tr, v3(SEM_X(510), 0, SEM_Z(250)), ew, SEM_X(555) - SEM_X(510), 10, 9, col(230, 226, 220), col(160, 162, 168));
+    edificio_plano(tr, v3(SEM_X(455), 0, SEM_Z(297)), ew, SEM_X(498) - SEM_X(455), 9, 8, col(226, 226, 230), col(40, 60, 110));
+    edificio_plano(tr, v3(SEM_X(345), 0, SEM_Z(298)), ns, 8, 16, 10, col(220, 220, 226), col(160, 162, 168));
+    /* estacionamiento con autos */
+    {
+        V3 c = v3(SEM_X(300), 0, SEM_Z(215));
+        if (footprint_ok(tr, c, v3(1, 0, 0), v3(0, 0, 1), -40, 40, 30, 4.0f)) {
+            Mesh *m = near_chunk(tr, c);
+            int a, b;
+            mesh_quad_flat(m, vadd(c, v3(-40, 0.05f, -30)), vadd(c, v3(40, 0.05f, -30)), vadd(c, v3(40, 0.05f, 30)), vadd(c, v3(-40, 0.05f, 30)), col(110, 110, 116));
+            for (a = 0; a < 12; a++) for (b = 0; b < 4; b++) {
+                static const int pc[][3] = {{200, 40, 40}, {40, 80, 180}, {230, 230, 235}, {30, 30, 34}, {150, 150, 156}};
+                const int *cc = pc[rng_u(&rg) % 5];
+                if (rng_f(&rg) < 0.3f) continue;
+                mesh_obox(m, vadd(c, v3(-36 + a * 6.5f, 0, -22 + b * 14.0f)), v3(1, 0, 0), v3(0, 0, 1), 0.9f, 2.1f, 1.3f, col(cc[0], cc[1], cc[2]), col_shade(col(cc[0], cc[1], cc[2]), 0.7f));
+            }
+        }
+    }
+    /* colonia de casas pequenas al sur y al este */
+    for (k = 0; k < 180; k++) {
+        V3 q, f;
+        if (!villa_spot(tr, &rg, &q, &f, 6, 7, 8, 0)) continue;
+        if (q.z < SEM_Z(250) && q.x < SEM_X(500)) continue;   /* al norte hay naves, no casas */
+        casa_costera(near_chunk(tr, q), &rg, q, vnorm(v3(0.84f, 0, -0.54f)), 0);
+    }
+    /* naves industriales al norte */
+    for (k = 0; k < 10; k++) {
+        V3 q = v3(SEM_X(60 + k * 60), 0, SEM_Z(40 + (k % 3) * 20));
+        edificio_plano(tr, q, v3(0, 0, 1), 18, 24, 10, col(200, 200, 204), col(176, 178, 182));
+    }
+    /* autopista al sur, en diagonal */
+    {
+        V3 a = v3(SEM_X(100), 0.04f, SEM_Z(790)), b = v3(SEM_X(760), 0.04f, SEM_Z(440));
+        V3 d = vnorm(vsub(b, a)), n = v3(-d.z, 0, d.x);
+        float L = vlen(vsub(b, a)), s;
+        for (s = 0; s < L; s += 40) {
+            V3 p0 = vadd(a, vscale(d, s)), p1 = vadd(a, vscale(d, fminf(s + 40, L)));
+            V3 mid = vscale(vadd(p0, p1), 0.5f);
+            Mesh *m;
+            if (min_dist_xz(tr, mid, NULL) < tr->wall + 30) continue;
+            m = near_chunk(tr, mid);
+            mesh_quad_flat(m, vadd(p0, vscale(n, -16)), vadd(p1, vscale(n, -16)), vadd(p1, vscale(n, 16)), vadd(p0, vscale(n, 16)), col(96, 96, 102));
+            mesh_quad_flat(m, vadd(p0, vadd(vscale(n, -0.4f), v3(0, 0.02f, 0))), vadd(p1, vadd(vscale(n, -0.4f), v3(0, 0.02f, 0))),
+                           vadd(p1, vadd(vscale(n, 0.4f), v3(0, 0.02f, 0))), vadd(p0, vadd(vscale(n, 0.4f), v3(0, 0.02f, 0))), col(230, 200, 60));
+        }
+    }
+    scatter_trees(tr, &rg, 160, 0, 4, 60);
+    lamp_posts(tr, 15);
+}
+
+/* ---------- Isla del Sol: mar alrededor, playa, hoteles y palmeras ---------- */
+
+#define ISLA_SEG 64
+static float isla_r[ISLA_SEG];   /* radio de la costa por direccion */
+
+static void isla_costa(Track *tr) {
+    int k, i;
+    for (k = 0; k < ISLA_SEG; k++) isla_r[k] = 0;
+    for (i = 0; i < tr->n; i++) {
+        float dx = tr->p[i].x - tr->center.x, dz = tr->p[i].z - tr->center.z;
+        float a = atan2f(dz, dx), d = sqrtf(dx * dx + dz * dz);
+        int s = ((int)floorf((a + (float)M_PI) / (2 * (float)M_PI) * ISLA_SEG)) % ISLA_SEG;
+        int t;
+        for (t = -2; t <= 2; t++) {
+            int u = (s + t + ISLA_SEG) % ISLA_SEG;
+            if (d > isla_r[u]) isla_r[u] = d;
+        }
+    }
+    /* suavizar y dejar espacio para hoteles y playa */
+    for (k = 0; k < 3; k++) {
+        float tmp[ISLA_SEG];
+        for (i = 0; i < ISLA_SEG; i++) tmp[i] = (isla_r[(i + ISLA_SEG - 1) % ISLA_SEG] + 2 * isla_r[i] + isla_r[(i + 1) % ISLA_SEG]) * 0.25f;
+        memcpy(isla_r, tmp, sizeof(tmp));
+    }
+    for (k = 0; k < ISLA_SEG; k++) isla_r[k] += 150.0f + 25.0f * sinf(k * 0.9f);
+}
+
+static V3 isla_pt(Track *tr, int k, float extra, float y) {
+    float a = -(float)M_PI + 2 * (float)M_PI * (k % ISLA_SEG) / ISLA_SEG;
+    float r = isla_r[k % ISLA_SEG] + extra;
+    return v3(tr->center.x + cosf(a) * r, y, tr->center.z + sinf(a) * r);
+}
+
+static void add_mar_isla(Track *tr) {
+    Mesh *m = &tr->world;
+    int k;
+    for (k = 0; k < ISLA_SEG; k++) {
+        V3 b0 = isla_pt(tr, k, -45, 0.06f), b1 = isla_pt(tr, k + 1, -45, 0.06f);
+        V3 c0 = isla_pt(tr, k, 0, 0.06f), c1 = isla_pt(tr, k + 1, 0, 0.06f);
+        V3 s0 = isla_pt(tr, k, 0, 0.12f), s1 = isla_pt(tr, k + 1, 0, 0.12f);
+        V3 f0 = isla_pt(tr, k, 8, 0.13f), f1 = isla_pt(tr, k + 1, 8, 0.13f);
+        V3 t0 = isla_pt(tr, k, 70, 0.12f), t1 = isla_pt(tr, k + 1, 70, 0.12f);
+        V3 o0 = isla_pt(tr, k, 3200, 0.12f), o1 = isla_pt(tr, k + 1, 3200, 0.12f);
+        mesh_quad_flat(m, b0, b1, c1, c0, col(240, 226, 180));                 /* arena */
+        mesh_quad_flat(m, s0, s1, f1, f0, col(240, 248, 250));                 /* espuma */
+        mesh_quad_flat(m, f0, f1, t1, t0, col(60, 200, 210));                  /* agua turquesa */
+        mesh_quad_flat(m, t0, t1, o1, o0, col(30, 110, 190));                  /* mar profundo */
+    }
+}
+
+static void hotel_playa(Mesh *m, Rng *rg, V3 c, V3 f) {
+    static const int pal[][3] = {{250, 250, 250}, {250, 230, 200}, {210, 236, 240}, {250, 214, 200}};
+    const int *p = pal[rng_u(rg) % 4];
+    V3 r = v3(-f.z, 0, f.x);
+    float h = rng_range(rg, 30, 70), y;
+    Col wall = col(p[0], p[1], p[2]);
+    int k;
+    /* torre de habitaciones con balcones hacia el mar (f apunta al mar) */
+    mesh_obox(m, c, r, f, 26, 8, h, wall, col(180, 186, 190));
+    for (y = 4; y < h - 2; y += 3.2f) {
+        mesh_obox(m, vadd(lp(c, r, f, 0, 0, 8.6f), v3(0, y, 0)), r, f, 25, 0.7f, 0.25f, col(240, 240, 244), col(240, 240, 244));
+        mesh_quad_flat(m, lp(c, r, f, -24, y + 0.3f, 8.05f), lp(c, r, f, 24, y + 0.3f, 8.05f), lp(c, r, f, 24, y + 2.4f, 8.05f), lp(c, r, f, -24, y + 2.4f, 8.05f), col(70, 130, 170));
+        /* ventanas tambien en la fachada trasera y en los costados */
+        mesh_quad_flat(m, lp(c, r, f, -24, y + 0.6f, -8.05f), lp(c, r, f, 24, y + 0.6f, -8.05f), lp(c, r, f, 24, y + 2.0f, -8.05f), lp(c, r, f, -24, y + 2.0f, -8.05f), col(80, 120, 150));
+        mesh_quad_flat(m, lp(c, r, f, 26.05f, y + 0.6f, -6), lp(c, r, f, 26.05f, y + 0.6f, 6), lp(c, r, f, 26.05f, y + 2.0f, 6), lp(c, r, f, 26.05f, y + 2.0f, -6), col(80, 120, 150));
+        mesh_quad_flat(m, lp(c, r, f, -26.05f, y + 0.6f, -6), lp(c, r, f, -26.05f, y + 0.6f, 6), lp(c, r, f, -26.05f, y + 2.0f, 6), lp(c, r, f, -26.05f, y + 2.0f, -6), col(80, 120, 150));
+    }
+    /* alberca y palapas frente al hotel */
+    mesh_quad_flat(m, lp(c, r, f, -16, 0.1f, 14), lp(c, r, f, 16, 0.1f, 14), lp(c, r, f, 16, 0.1f, 30), lp(c, r, f, -16, 0.1f, 30), col(232, 226, 210));
+    mesh_quad_flat(m, lp(c, r, f, -12, 0.14f, 17), lp(c, r, f, 12, 0.14f, 17), lp(c, r, f, 12, 0.14f, 27), lp(c, r, f, -12, 0.14f, 27), col(60, 190, 230));
+    for (k = 0; k < 3; k++) {
+        V3 q = lp(c, r, f, -14 + k * 14, 0, 34);
+        mesh_prism(m, q, 0.25f, 3.0f, 5, col(130, 96, 60), col(130, 96, 60));
+        mesh_cone(m, vadd(q, v3(0, 2.8f, 0)), 3.0f, 1.6f, 8, col(206, 176, 110));
+    }
+}
+
+static void lancha(Mesh *m, V3 p, float yaw, Col c) {
+    V3 f = v3(sinf(yaw), 0, -cosf(yaw)), r = v3(-f.z, 0, f.x);
+    mesh_obox(m, p, r, f, 1.2f, 3.2f, 0.9f, c, col(240, 240, 240));
+    mesh_obox(m, vadd(lp(p, r, f, 0, 0, -0.6f), v3(0, 0.9f, 0)), r, f, 0.8f, 0.9f, 0.6f, col(60, 80, 110), col(240, 240, 240));
+}
+
+static void scenery_isla(Track *tr) {
+    Rng rg = {777};
+    int k, tries;
+    isla_costa(tr);
+    /* hoteles mirando al mar, entre la pista y la playa */
+    for (k = 0, tries = 0; k < 14 && tries < 400; tries++) {
+        int s = rng_u(&rg) % ISLA_SEG;
+        V3 pos = isla_pt(tr, s, -95, 0), out = vnorm(vsub(isla_pt(tr, s, 0, 0), tr->center));
+        V3 r;
+        out.y = 0; out = vnorm(out); r = v3(-out.z, 0, out.x);
+        if (!footprint_ok(tr, pos, r, out, -27, 27, 9, 12.0f)) continue;
+        if (!footprint_ok(tr, vadd(pos, vscale(out, 24)), r, out, -17, 17, 12, 8.0f)) continue;
+        hotel_playa(near_chunk(tr, pos), &rg, pos, out);
+        k++;
+    }
+    /* sombrillas y camastros en la arena */
+    for (k = 0; k < 90; k++) {
+        int s = rng_u(&rg) % ISLA_SEG;
+        V3 q = isla_pt(tr, s, -rng_range(&rg, 8, 38), 0);
+        Mesh *m;
+        if (min_dist_xz(tr, q, NULL) < tr->wall + 6) continue;
+        m = near_chunk(tr, q);
+        mesh_prism(m, q, 0.06f, 2.4f, 4, col(220, 220, 220), col(220, 220, 220));
+        mesh_cone(m, vadd(q, v3(0, 2.4f, 0)), 1.7f, 0.6f, 8, (k % 3 == 0) ? col(240, 80, 70) : (k % 3 == 1) ? col(250, 210, 50) : col(60, 150, 230));
+        mesh_obox(m, vadd(q, v3(1.2f, 0, 0)), v3(1, 0, 0), v3(0, 0, 1), 0.4f, 1.0f, 0.35f, col(250, 250, 250), col(250, 250, 250));
+    }
+    /* palmeras por toda la isla */
+    for (k = 0, tries = 0; k < 220 && tries < 6000; tries++) {
+        int i = rng_u(&rg) % tr->n, ni;
+        V3 q = at(tr, i, ((rng_u(&rg) & 1) ? 1 : -1) * (tr->wall + rng_range(&rg, 7, 140)), 0);
+        float dx, dz, a, r;
+        int s;
+        q.y = 0;
+        dx = q.x - tr->center.x; dz = q.z - tr->center.z;
+        a = atan2f(dz, dx); r = sqrtf(dx * dx + dz * dz);
+        s = ((int)floorf((a + (float)M_PI) / (2 * (float)M_PI) * ISLA_SEG)) % ISLA_SEG;
+        if (r > isla_r[s] - 6) continue;
+        if (min_dist_xz(tr, q, &ni) < tr->wall + 7) continue;
+        palmera(chunk_mesh(tr, ni), q, rng_range(&rg, 0.9f, 1.4f));
+        k++;
+    }
+    /* lanchas y un muelle */
+    for (k = 0; k < 12; k++) {
+        int s = rng_u(&rg) % ISLA_SEG;
+        V3 q = isla_pt(tr, s, rng_range(&rg, 40, 260), 0.12f);
+        lancha(near_chunk(tr, q), q, rng_range(&rg, 0, 6.28f), (k & 1) ? col(250, 250, 250) : col(230, 60, 50));
+    }
+    {
+        int s = 10;
+        V3 a = isla_pt(tr, s, -10, 0.9f), b = isla_pt(tr, s, 90, 0.9f);
+        V3 d = vnorm(vsub(b, a)), n = v3(-d.z, 0, d.x);
+        mesh_quad(near_chunk(tr, a), vadd(a, vscale(n, -2)), vadd(a, vscale(n, 2)), vadd(b, vscale(n, 2)), vadd(b, vscale(n, -2)), col(150, 110, 70));
+    }
+    /* gradas en la recta de salida */
+    {
+        int i0 = 15;
+        V3 rr = tr->r[i0], ff = vnorm(v3(tr->t[i0].x, 0, tr->t[i0].z));
+        V3 rel = vsub(tr->p[i0], tr->center);
+        float side_in = (rr.x * rel.x + rr.z * rel.z) > 0 ? -1.0f : 1.0f;
+        grada(chunk_mesh(tr, i0 + 20), &rg, at(tr, i0 + 20, side_in * (tr->wall + 4.0f), 0), vscale(rr, -side_in), ff, 40.0f);
+    }
+}
+
+/* ---------- Espinazo: cresta de montana, valle con nubes y un festival de carreras en la cima ---------- */
+
+static float plateau_y(Track *tr, V3 q) { int ni; min_dist_xz(tr, q, &ni); return tr->p[ni].y - 0.15f; }
+
+static void escenario(Mesh *m, V3 c, V3 f) {
+    V3 r = v3(-f.z, 0, f.x);
+    Col truss = col(60, 60, 66), black = col(24, 24, 28);
+    static const int lc[][3] = {{255, 60, 160}, {60, 200, 255}, {255, 210, 40}, {120, 255, 120}};
+    int k;
+    mesh_obox(m, c, r, f, 16, 7, 1.6f, black, col(40, 40, 46));
+    for (k = 0; k < 4; k++) mesh_obox(m, lp(c, r, f, (k & 1) ? 15 : -15, 0, (k & 2) ? 6 : -6), r, f, 0.5f, 0.5f, 14, truss, truss);
+    mesh_obox(m, vadd(c, v3(0, 14, 0)), r, f, 16.5f, 7.5f, 1.2f, truss, col(230, 60, 140));
+    /* pantalla y luces de colores */
+    mesh_quad_flat(m, lp(c, r, f, -8, 4, -6.9f), lp(c, r, f, 8, 4, -6.9f), lp(c, r, f, 8, 12, -6.9f), lp(c, r, f, -8, 12, -6.9f), col(40, 90, 200));
+    for (k = 0; k < 8; k++) {
+        const int *cc = lc[k & 3];
+        mesh_obox(m, lp(c, r, f, -14 + k * 4, 13.2f, 6.8f), r, f, 0.7f, 0.5f, 0.8f, col(cc[0], cc[1], cc[2]), col(cc[0], cc[1], cc[2]));
+    }
+    /* torres de bocinas */
+    for (k = -1; k <= 1; k += 2) mesh_obox(m, lp(c, r, f, k * 20, 0, 4), r, f, 2.5f, 2.0f, 9, black, black);
+}
+
+static void carpa(Mesh *m, V3 p, Col c) {
+    mesh_obox(m, p, v3(1, 0, 0), v3(0, 0, 1), 4, 4, 3, col(240, 240, 240), col(240, 240, 240));
+    mesh_cone(m, vadd(p, v3(0, 3, 0)), 6.0f, 4.0f, 4, c);
+}
+
+static void rueda_fortuna(Mesh *m, V3 c, V3 f) {
+    V3 r = v3(-f.z, 0, f.x);
+    float R = 18, hub = 21;
+    int k, S = 16;
+    static const int gc[][3] = {{240, 60, 60}, {60, 140, 240}, {250, 210, 40}, {80, 200, 120}};
+    for (k = -1; k <= 1; k += 2) {
+        V3 base0 = lp(c, r, f, -9, 0, k * 2.0f), base1 = lp(c, r, f, 9, 0, k * 2.0f), top = lp(c, r, f, 0, hub, k * 2.0f);
+        V3 s0 = vscale(f, 0.4f);
+        mesh_quad(m, vsub(base0, s0), vadd(base0, s0), vadd(top, s0), vsub(top, s0), col(220, 220, 228));
+        mesh_quad(m, vsub(base1, s0), vadd(base1, s0), vadd(top, s0), vsub(top, s0), col(220, 220, 228));
+    }
+    for (k = 0; k < S; k++) {
+        float a0 = 2 * (float)M_PI * k / S, a1 = 2 * (float)M_PI * (k + 1) / S;
+        V3 p0 = lp(c, r, f, cosf(a0) * R, hub + sinf(a0) * R, 0), p1 = lp(c, r, f, cosf(a1) * R, hub + sinf(a1) * R, 0);
+        V3 s0 = vscale(f, 1.2f);
+        const int *cc = gc[k & 3];
+        mesh_quad(m, vsub(p0, s0), vadd(p0, s0), vadd(p1, s0), vsub(p1, s0), col(240, 240, 248));
+        mesh_quad_flat(m, lp(c, r, f, 0, hub, 0), p0, vadd(p0, v3(0, 0.3f, 0)), lp(c, r, f, 0, hub + 0.3f, 0), col(200, 200, 210));
+        mesh_obox(m, vsub(p0, v3(0, 2.4f, 0)), r, f, 1.1f, 1.1f, 2.0f, col(cc[0], cc[1], cc[2]), col(cc[0], cc[1], cc[2]));
+    }
+}
+
+/* linea de banderines entre dos postes (paralela a la pista, nunca encima) */
+static void banderines(Mesh *m, V3 a, V3 b) {
+    static const int pc[][3] = {{240, 60, 60}, {250, 210, 40}, {60, 140, 240}, {80, 200, 120}, {240, 120, 200}};
+    V3 d = vsub(b, a);
+    int k, n = (int)(vlen(d) / 1.6f);
+    mesh_prism(m, a, 0.12f, 6, 4, col(200, 200, 206), col(200, 200, 206));
+    mesh_prism(m, b, 0.12f, 6, 4, col(200, 200, 206), col(200, 200, 206));
+    for (k = 0; k < n; k++) {
+        float t0 = (float)k / n, t1 = (k + 0.8f) / n;
+        float sag0 = 1.2f * sinf((float)M_PI * t0), sag1 = 1.2f * sinf((float)M_PI * t1);
+        V3 p0 = vadd(vlerp(a, b, t0), v3(0, 6 - sag0, 0)), p1 = vadd(vlerp(a, b, t1), v3(0, 6 - sag1, 0));
+        const int *cc = pc[k % 5];
+        mesh_tri_flat(m, p0, p1, vadd(vlerp(p0, p1, 0.5f), v3(0, -1.0f, 0)), col(cc[0], cc[1], cc[2]));
+    }
+}
+
+static void add_sierra_y_nubes(Track *tr) {
+    Mesh *m = &tr->world;
+    Rng rg = {1958};
+    int k;
+    /* sierras alrededor, mas altas a lo lejos */
+    for (k = 0; k < 40; k++) {
+        float a = 2 * (float)M_PI * k / 40 + rng_range(&rg, -0.05f, 0.05f);
+        float R = tr->extent + rng_range(&rg, 500, 1400);
+        V3 b = v3(tr->center.x + cosf(a) * R, -2, tr->center.z + sinf(a) * R);
+        float H = rng_range(&rg, 120, 340);
+        mesh_cone(m, b, rng_range(&rg, 220, 420), H, 7, (k & 1) ? col(62, 100, 66) : col(74, 110, 72));
+        if (H > 260) mesh_cone(m, vadd(b, v3(0, H * 0.75f, 0)), 60, H * 0.25f, 7, col(126, 116, 104));
+    }
+    /* mar de nubes en el valle */
+    for (k = 0; k < 46; k++) {
+        float a = rng_range(&rg, 0, 6.28f), R = tr->extent + rng_range(&rg, 140, 900);
+        V3 c = v3(tr->center.x + cosf(a) * R, rng_range(&rg, 70, 110), tr->center.z + sinf(a) * R);
+        float W = rng_range(&rg, 50, 120);
+        mesh_cone(m, c, W, 14, 8, col(244, 246, 250));
+        mesh_cone(m, c, W * 0.9f, -6, 8, col(226, 230, 238));
+    }
+}
+
+static void scenery_espinazo(Track *tr) {
+    Rng rg = {2025};
+    V3 q, f;
+    int k;
+    /* festival en la meseta del centro */
+    if (villa_spot(tr, &rg, &q, &f, 24, 12, 10, 1)) { q.y = plateau_y(tr, q); escenario(near_chunk(tr, q), q, f); }
+    if (villa_spot(tr, &rg, &q, &f, 14, 14, 10, 1)) { q.y = plateau_y(tr, q); rueda_fortuna(near_chunk(tr, q), q, f); }
+    for (k = 0; k < 22; k++) {
+        static const int tc[][3] = {{240, 70, 70}, {60, 150, 240}, {250, 200, 40}, {150, 80, 220}, {60, 190, 120}, {250, 130, 40}};
+        const int *cc = tc[k % 6];
+        if (!villa_spot(tr, &rg, &q, &f, 7, 7, 6, 1)) continue;
+        q.y = plateau_y(tr, q);
+        carpa(near_chunk(tr, q), q, col(cc[0], cc[1], cc[2]));
+    }
+    /* autos de exhibicion en el festival */
+    for (k = 0; k < 14; k++) {
+        static const int pc[][3] = {{220, 40, 40}, {40, 90, 200}, {250, 200, 40}, {240, 240, 244}, {30, 30, 34}};
+        const int *cc = pc[k % 5];
+        if (!villa_spot(tr, &rg, &q, &f, 3, 4, 6, 1)) continue;
+        q.y = plateau_y(tr, q);
+        mesh_obox(near_chunk(tr, q), q, v3(-f.z, 0, f.x), f, 0.95f, 2.2f, 1.2f, col(cc[0], cc[1], cc[2]), col_shade(col(cc[0], cc[1], cc[2]), 0.7f));
+    }
+    /* banderines y torres de luces de colores junto a la pista (del lado del festival) */
+    for (k = 0; k < tr->n; k += 22) {
+        V3 rel = vsub(tr->p[k], tr->center);
+        float side_in;
+        int k2 = (k + 10) % tr->n;
+        V3 a, b;
+        /* lado interior: el que mira hacia la meseta */
+        side_in = inside_loop(tr, at(tr, k, tr->wall + 6, 0).x, at(tr, k, tr->wall + 6, 0).z) ? 1.0f : -1.0f;
+        a = at(tr, k, side_in * (tr->wall + 4.0f), 0);
+        b = at(tr, k2, side_in * (tr->wall + 4.0f), 0);
+        a.y = tr->p[k].y; b.y = tr->p[k2].y;
+        if (min_dist_xz(tr, a, NULL) < tr->wall + 2 || min_dist_xz(tr, b, NULL) < tr->wall + 2) continue;
+        banderines(chunk_mesh(tr, k), a, b);
+        (void)rel;
+    }
+    /* gradas junto a la recta de salida, del lado del festival */
+    {
+        int i0 = 30;
+        V3 rr = tr->r[i0], ff = vnorm(v3(tr->t[i0].x, 0, tr->t[i0].z));
+        float side_in = inside_loop(tr, at(tr, i0, tr->wall + 6, 0).x, at(tr, i0, tr->wall + 6, 0).z) ? 1.0f : -1.0f;
+        V3 g = at(tr, i0 + 15, side_in * (tr->wall + 4.0f), 0);
+        g.y = tr->p[i0 + 15].y;
+        grada(chunk_mesh(tr, i0 + 15), &rg, g, vscale(rr, -side_in), ff, 35.0f);
+    }
+    /* pinos en las laderas y el valle */
+    for (k = 0; k < 260; k++) {
+        int i = rng_u(&rg) % tr->n, ni;
+        V3 p = at(tr, i, ((rng_u(&rg) & 1) ? 1 : -1) * (tr->wall + rng_range(&rg, 25, 220)), 0);
+        if (inside_loop(tr, p.x, p.z)) continue;
+        if (min_dist_xz(tr, p, &ni) < tr->wall + 20) continue;
+        p.y = terrain_h(tr, p.x, p.z);
+        tree_pine(chunk_mesh(tr, ni), p, rng_range(&rg, 1.4f, 2.4f));
+    }
+}
+
+/* ---------- Campos del Tren: cultivos, granjas, arboles variados y via ferrea ---------- */
+
+static void campo(Track *tr, Rng *rg, V3 c, V3 f, float hw, float hl) {
+    static const int tipos[][3] = {{214, 186, 90}, {110, 160, 70}, {150, 110, 74}, {180, 200, 80}, {90, 140, 60}};
+    const int *t = tipos[rng_u(rg) % 5];
+    V3 r = v3(-f.z, 0, f.x);
+    Mesh *m = near_chunk(tr, c);
+    int k, rows = (int)(hw / 2.5f);
+    Col base = col(t[0], t[1], t[2]);
+    mesh_quad_flat(m, lp(c, r, f, -hw, 0.04f, -hl), lp(c, r, f, hw, 0.04f, -hl), lp(c, r, f, hw, 0.04f, hl), lp(c, r, f, -hw, 0.04f, hl), base);
+    for (k = 0; k < rows; k++) {
+        float x = -hw + (k + 0.5f) * (2 * hw / rows);
+        mesh_quad_flat(m, lp(c, r, f, x - 0.5f, 0.07f, -hl + 1), lp(c, r, f, x + 0.5f, 0.07f, -hl + 1),
+                       lp(c, r, f, x + 0.5f, 0.07f, hl - 1), lp(c, r, f, x - 0.5f, 0.07f, hl - 1), col_shade(base, 0.82f));
+    }
+    /* cerca de postes en dos lados */
+    for (k = 0; k <= 8; k++) {
+        float z = -hl + k * hl / 4.0f;
+        mesh_obox(m, lp(c, r, f, -hw - 1, 0, z), r, f, 0.12f, 0.12f, 1.3f, col(120, 90, 60), col(120, 90, 60));
+        mesh_obox(m, lp(c, r, f, hw + 1, 0, z), r, f, 0.12f, 0.12f, 1.3f, col(120, 90, 60), col(120, 90, 60));
+    }
+}
+
+static void molino_agua(Mesh *m, V3 p) {
+    Col steel = col(170, 170, 176);
+    int k;
+    mesh_cone(m, p, 2.5f, 13, 4, steel);
+    for (k = 0; k < 8; k++) {
+        float a = k * 0.785f;
+        V3 hub = vadd(p, v3(0, 12.5f, 1.2f));
+        mesh_tri(m, hub, vadd(hub, v3(cosf(a) * 2.6f, sinf(a) * 2.6f, 0)), vadd(hub, v3(cosf(a + 0.3f) * 2.6f, sinf(a + 0.3f) * 2.6f, 0)), col(220, 220, 226));
+    }
+}
+
+static void vaca(Mesh *m, V3 p, float yaw) {
+    V3 f = v3(sinf(yaw), 0, -cosf(yaw)), r = v3(-f.z, 0, f.x);
+    mesh_obox(m, vadd(p, v3(0, 0.7f, 0)), r, f, 0.45f, 0.9f, 0.7f, col(245, 245, 245), col(40, 40, 40));
+    mesh_obox(m, vadd(lp(p, r, f, 0, 0, -1.1f), v3(0, 1.0f, 0)), r, f, 0.25f, 0.3f, 0.4f, col(40, 40, 40), col(40, 40, 40));
+    mesh_obox(m, p, r, f, 0.35f, 0.7f, 0.7f, col(60, 50, 44), col(60, 50, 44));
+}
+
+static void via_tren(Track *tr) {
+    V3 a = v3(GRJ_A_X, 0, GRJ_A_Z), b = v3(GRJ_B_X, 0, GRJ_B_Z);
+    V3 d = vnorm(vsub(b, a)), n = v3(d.z, 0, -d.x);
+    float L, s, off = tr->wall + 30.0f;
+    /* lado exterior: el que se aleja del centro del circuito */
+    if (vdot(n, vsub(vscale(vadd(a, b), 0.5f), tr->center)) < 0) n = vscale(n, -1);
+    a = vsub(a, vscale(d, 500)); b = vadd(b, vscale(d, 500));
+    L = vlen(vsub(b, a));
+    for (s = 0; s < L; s += 20) {
+        V3 p0 = vadd(vadd(a, vscale(d, s)), vscale(n, off)), p1 = vadd(vadd(a, vscale(d, s + 20)), vscale(n, off));
+        V3 mid = vscale(vadd(p0, p1), 0.5f);
+        Mesh *m;
+        float t;
+        if (min_dist_xz(tr, mid, NULL) < tr->wall + 18) continue;
+        m = near_chunk(tr, mid);
+        mesh_quad(m, vadd(p0, vadd(vscale(n, -3.0f), v3(0, 0.3f, 0))), vadd(p1, vadd(vscale(n, -3.0f), v3(0, 0.3f, 0))),
+                  vadd(p1, vadd(vscale(n, 3.0f), v3(0, 0.3f, 0))), vadd(p0, vadd(vscale(n, 3.0f), v3(0, 0.3f, 0))), col(140, 136, 128));
+        for (t = 0; t < 20; t += 2.0f) {
+            V3 q = vadd(p0, vscale(d, t));
+            mesh_quad_flat(m, vadd(q, vadd(vscale(n, -1.4f), v3(0, 0.36f, 0))), vadd(q, vadd(vscale(n, 1.4f), v3(0, 0.36f, 0))),
+                           vadd(q, vadd(vadd(vscale(n, 1.4f), vscale(d, 0.5f)), v3(0, 0.36f, 0))), vadd(q, vadd(vadd(vscale(n, -1.4f), vscale(d, 0.5f)), v3(0, 0.36f, 0))), col(110, 80, 56));
+        }
+        {
+            int k;
+            for (k = -1; k <= 1; k += 2) {
+                V3 o = vscale(n, k * 0.75f);
+                mesh_quad(m, vadd(vadd(p0, o), v3(0, 0.38f, 0)), vadd(vadd(p1, o), v3(0, 0.38f, 0)), vadd(vadd(p1, o), v3(0, 0.55f, 0)), vadd(vadd(p0, o), v3(0, 0.55f, 0)), col(90, 90, 96));
+            }
+        }
+    }
+    /* tren de carga detenido sobre la via */
+    {
+        static const int cc[][3] = {{180, 50, 40}, {60, 90, 150}, {200, 160, 50}, {80, 120, 80}, {140, 140, 146}};
+        float s0 = L * 0.35f;
+        int k;
+        for (k = 0; k < 7; k++) {
+            V3 p = vadd(vadd(a, vscale(d, s0 + k * 15.5f)), vscale(n, off));
+            Mesh *m = near_chunk(tr, p);
+            p.y = 0.55f;
+            if (k == 0) {
+                mesh_obox(m, p, n, d, 1.6f, 7.0f, 3.8f, col(240, 200, 40), col(60, 60, 64));
+                mesh_obox(m, vadd(p, v3(0, 3.8f, 0)), n, d, 1.4f, 2.2f, 0.8f, col(60, 60, 64), col(60, 60, 64));
+            } else {
+                const int *c = cc[k % 5];
+                mesh_obox(m, p, n, d, 1.6f, 7.0f, 3.4f, col(c[0], c[1], c[2]), col_shade(col(c[0], c[1], c[2]), 0.8f));
+            }
+        }
+    }
+}
+
+static void scenery_granja(Track *tr) {
+    Rng rg = {1880};
+    V3 q, f;
+    int k;
+    via_tren(tr);
+    for (k = 0; k < 26; k++)
+        if (villa_spot(tr, &rg, &q, &f, 24, 34, 6, -1)) campo(tr, &rg, q, f, rng_range(&rg, 16, 22), rng_range(&rg, 24, 32));
+    for (k = 0; k < 4; k++)
+        if (villa_spot(tr, &rg, &q, &f, 26, 22, 12, -1)) {
+            barn(near_chunk(tr, q), q, f);
+            casa(near_chunk(tr, q), &rg, vadd(q, vscale(v3(-f.z, 0, f.x), 32)), f);
+        }
+    for (k = 0; k < 6; k++)
+        if (villa_spot(tr, &rg, &q, &f, 4, 4, 6, -1)) molino_agua(near_chunk(tr, q), q);
+    for (k = 0; k < 40; k++)
+        if (villa_spot(tr, &rg, &q, &f, 2, 2, 5, -1)) mesh_prism(near_chunk(tr, q), q, 1.1f, 1.6f, 6, col(220, 190, 90), col(235, 205, 110));
+    for (k = 0; k < 30; k++)
+        if (villa_spot(tr, &rg, &q, &f, 2, 2, 6, -1)) vaca(near_chunk(tr, q), q, rng_range(&rg, 0, 6.28f));
+    /* arboles de varios tipos: redondos, pinos y alamos en hileras */
+    for (k = 0; k < 260; k++) {
+        if (!villa_spot(tr, &rg, &q, &f, 3, 3, 4, -1)) continue;
+        switch (k % 3) {
+        case 0: tree_round(near_chunk(tr, q), q, rng_range(&rg, 0.9f, 1.6f)); break;
+        case 1: tree_pine(near_chunk(tr, q), q, rng_range(&rg, 1.0f, 1.6f)); break;
+        default: alamo(near_chunk(tr, q), q, rng_range(&rg, 0.9f, 1.3f)); break;
+        }
+    }
+}
+
+/* ---------- Bosque Denso ---------- */
+
+static void tronco_caido(Mesh *m, V3 p, float yaw) {
+    V3 f = v3(sinf(yaw), 0, -cosf(yaw)), r = v3(-f.z, 0, f.x);
+    mesh_obox(m, p, r, f, 0.5f, 4.0f, 1.0f, col(110, 80, 54), col(130, 96, 64));
+}
+
+static void hongo(Mesh *m, V3 p) {
+    mesh_prism(m, p, 0.15f, 0.5f, 5, col(240, 236, 220), col(240, 236, 220));
+    mesh_cone(m, vadd(p, v3(0, 0.5f, 0)), 0.45f, 0.35f, 6, col(210, 50, 40));
+}
+
+static void scenery_bosque(Track *tr) {
+    Rng rg = {2112};
+    int k, tries;
+    /* muchisimos arboles de varias especies, pegados a la pista */
+    for (k = 0, tries = 0; k < 1400 && tries < 30000; tries++) {
+        int i = rng_u(&rg) % tr->n, ni;
+        float dd = (k % 10 < 7) ? rng_range(&rg, 3, 40) : rng_range(&rg, 40, 160);
+        V3 q = at(tr, i, ((rng_u(&rg) & 1) ? 1 : -1) * (tr->wall + dd), 0);
+        float clear;
+        q.y = 0;
+        clear = min_dist_xz(tr, q, &ni);
+        if (clear < tr->wall + 3) continue;
+        switch (rng_u(&rg) % 5) {
+        case 0: case 1: tree_pine(chunk_mesh(tr, ni), q, rng_range(&rg, 1.3f, 2.6f)); break;
+        case 2: tree_round(chunk_mesh(tr, ni), q, rng_range(&rg, 1.2f, 2.0f)); break;
+        case 3: if (clear > tr->wall + 5) alamo(chunk_mesh(tr, ni), q, rng_range(&rg, 1.0f, 1.5f)); break;
+        default: if (clear > tr->wall + 6) tree_round(chunk_mesh(tr, ni), q, rng_range(&rg, 2.0f, 2.8f)); break;
+        }
+        k++;
+    }
+    /* sotobosque: arbustos, troncos caidos, rocas y hongos */
+    for (k = 0, tries = 0; k < 220 && tries < 6000; tries++) {
+        int i = rng_u(&rg) % tr->n, ni;
+        V3 q = at(tr, i, ((rng_u(&rg) & 1) ? 1 : -1) * (tr->wall + rng_range(&rg, 2, 60)), 0);
+        q.y = 0;
+        if (min_dist_xz(tr, q, &ni) < tr->wall + 2) continue;
+        switch (k % 4) {
+        case 0: mesh_cone(chunk_mesh(tr, ni), q, rng_range(&rg, 1.0f, 2.0f), rng_range(&rg, 0.8f, 1.6f), 6, col(50, 100, 50)); break;
+        case 1: if (min_dist_xz(tr, q, NULL) > tr->wall + 6) tronco_caido(chunk_mesh(tr, ni), q, rng_range(&rg, 0, 6.28f)); break;
+        case 2: mesh_cone(chunk_mesh(tr, ni), q, rng_range(&rg, 1.0f, 2.2f), rng_range(&rg, 0.8f, 1.6f), 5, col(120, 116, 110)); break;
+        default: hongo(chunk_mesh(tr, ni), q); break;
+        }
+        k++;
+    }
+}
+
 /* ---------- construccion principal ---------- */
 
 void track_build_centerline(Track *tr, int id) {
@@ -2227,6 +3749,15 @@ void track_build_centerline(Track *tr, int id) {
     case TRACK_VOLCANES: raw_from_controls(VOLCAN_CP, sizeof(VOLCAN_CP) / sizeof(VOLCAN_CP[0])); tr->hw = 7.0f; break;
     case TRACK_AGAVE: raw_from_controls(AGAVE_CP, sizeof(AGAVE_CP) / sizeof(AGAVE_CP[0])); tr->hw = 7.5f; break;
     case TRACK_BAJA: raw_from_controls(BAJA_CP, sizeof(BAJA_CP) / sizeof(BAJA_CP[0])); tr->hw = 7.0f; break;
+    case TRACK_CUMBRES: raw_from_controls(CUMBRES_CP, sizeof(CUMBRES_CP) / sizeof(CUMBRES_CP[0])); tr->hw = 7.5f; break;
+    case TRACK_FUNDIDORA: raw_from_controls(FUND_CP, sizeof(FUND_CP) / sizeof(FUND_CP[0])); tr->hw = 7.5f; break;
+    case TRACK_VILLA: raw_from_controls(VILLA_CP, sizeof(VILLA_CP) / sizeof(VILLA_CP[0])); tr->hw = 7.5f; break;
+    case TRACK_AZTLAN: raw_from_controls(AZTLAN_CP, sizeof(AZTLAN_CP) / sizeof(AZTLAN_CP[0])); tr->hw = 7.5f; break;
+    case TRACK_SEMINARIO: raw_from_controls(SEMI_CP, sizeof(SEMI_CP) / sizeof(SEMI_CP[0])); tr->hw = 7.0f; break;
+    case TRACK_ISLA: raw_from_controls(ISLA_CP, sizeof(ISLA_CP) / sizeof(ISLA_CP[0])); tr->hw = 7.5f; break;
+    case TRACK_ESPINAZO: raw_from_controls(ESPINAZO_CP, sizeof(ESPINAZO_CP) / sizeof(ESPINAZO_CP[0])); tr->hw = 7.0f; break;
+    case TRACK_GRANJA: raw_from_controls(GRANJA_CP, sizeof(GRANJA_CP) / sizeof(GRANJA_CP[0])); tr->hw = 7.5f; break;
+    case TRACK_BOSQUE: raw_from_controls(BOSQUE_CP, sizeof(BOSQUE_CP) / sizeof(BOSQUE_CP[0])); tr->hw = 7.0f; break;
     default: raw_from_controls(VALLE_CP, sizeof(VALLE_CP) / sizeof(VALLE_CP[0])); tr->hw = 7.5f; break;
     }
     tr->wall = tr->hw + 1.7f;
@@ -2249,6 +3780,7 @@ void track_build(Track *tr, int id) {
     int i;
     Col grass;
     track_build_centerline(tr, id);
+    g_cur = tr;
     tr->fog_start = 420.0f; tr->fog_end = 1900.0f; tr->zfar = 2600.0f;
     tr->curb_a = col(220, 30, 30); tr->curb_b = col(245, 245, 245);
     tr->terrain = 0; tr->street_y = 0;
@@ -2346,6 +3878,92 @@ void track_build(Track *tr, int id) {
         scenery_baja(tr);
         build_world(tr, col(200, 172, 122), col(186, 160, 112), col(140, 112, 96));
         tr->fog_start = 700.0f; tr->fog_end = 3000.0f; tr->zfar = 3600.0f;
+        break;
+    case TRACK_GRANJA:
+        grass = col(118, 162, 74);
+        tr->sky_top = col(60, 130, 220); tr->sky_horizon = col(220, 230, 236); tr->fog = col(222, 230, 234);
+        build_road(tr, col(236, 236, 240), col(60, 130, 70), grass);
+        scenery_granja(tr);
+        build_world(tr, col(118, 162, 74), col(130, 168, 80), col(100, 120, 110));
+        tr->fog_start = 700.0f; tr->fog_end = 3200.0f; tr->zfar = 3800.0f;
+        break;
+    case TRACK_BOSQUE:
+        grass = col(60, 104, 52);
+        tr->sky_top = col(70, 130, 200); tr->sky_horizon = col(196, 216, 210); tr->fog = col(150, 176, 160);
+        build_road(tr, col(110, 90, 66), col(92, 76, 56), grass);
+        scenery_bosque(tr);
+        build_world(tr, col(56, 98, 50), col(52, 92, 48), col(46, 80, 56));
+        tr->fog_start = 180.0f; tr->fog_end = 900.0f; tr->zfar = 1300.0f;
+        break;
+    case TRACK_ESPINAZO:
+        grass = col(110, 142, 76);
+        tr->terrain = 3; tr->street_y = 0.0f;
+        tr->curb_a = col(240, 60, 150); tr->curb_b = col(250, 250, 250);
+        tr->sky_top = col(40, 100, 210); tr->sky_horizon = col(220, 214, 236); tr->fog = col(214, 220, 236);
+        build_road(tr, col(240, 240, 244), col(250, 190, 40), grass);
+        mesh_init(&tr->world);
+        build_world_terrain(tr);
+        scenery_espinazo(tr);
+        add_sierra_y_nubes(tr);
+        tr->fog_start = 900.0f; tr->fog_end = 3800.0f; tr->zfar = 4400.0f;
+        break;
+    case TRACK_ISLA:
+        grass = col(110, 170, 80);
+        tr->sky_top = col(20, 120, 230); tr->sky_horizon = col(190, 232, 250); tr->fog = col(196, 232, 248);
+        build_road(tr, col(250, 250, 250), col(40, 170, 200), grass);
+        scenery_isla(tr);
+        build_world(tr, col(110, 170, 80), col(118, 176, 84), col(80, 130, 90));
+        add_mar_isla(tr);
+        tr->fog_start = 800.0f; tr->fog_end = 3600.0f; tr->zfar = 4200.0f;
+        break;
+    case TRACK_SEMINARIO:
+        grass = col(110, 150, 80);
+        tr->curb_a = col(236, 190, 40); tr->curb_b = col(60, 60, 64);
+        tr->sky_top = col(56, 120, 210); tr->sky_horizon = col(214, 222, 230); tr->fog = col(214, 222, 230);
+        build_road(tr, col(214, 210, 200), col(186, 180, 168), grass);
+        scenery_seminario(tr);
+        build_world(tr, col(140, 150, 96), col(150, 146, 120), col(110, 112, 116));
+        add_cerros_mty(tr);
+        tr->fog_start = 800.0f; tr->fog_end = 3600.0f; tr->zfar = 4200.0f;
+        break;
+    case TRACK_AZTLAN:
+        grass = col(104, 160, 78);
+        tr->terrain = 2; tr->street_y = 0.0f;
+        tr->curb_a = col(30, 150, 220); tr->curb_b = col(250, 250, 250);
+        tr->sky_top = col(30, 120, 226); tr->sky_horizon = col(196, 228, 248); tr->fog = col(206, 230, 246);
+        build_road(tr, col(250, 200, 40), col(40, 140, 220), grass);
+        mesh_init(&tr->world);
+        build_world_terrain(tr);
+        scenery_aztlan(tr);
+        add_cerros_mty(tr);
+        tr->fog_start = 800.0f; tr->fog_end = 3600.0f; tr->zfar = 4200.0f;
+        break;
+    case TRACK_VILLA:
+        grass = col(98, 156, 76);
+        tr->sky_top = col(46, 112, 214); tr->sky_horizon = col(206, 224, 240); tr->fog = col(210, 224, 238);
+        build_road(tr, col(40, 90, 200), col(240, 240, 244), grass);
+        scenery_villa(tr);
+        build_world(tr, col(98, 156, 76), col(92, 148, 72), col(110, 112, 116));
+        add_cerros_mty(tr);
+        tr->fog_start = 800.0f; tr->fog_end = 3600.0f; tr->zfar = 4200.0f;
+        break;
+    case TRACK_FUNDIDORA:
+        grass = col(96, 146, 70);
+        tr->sky_top = col(56, 120, 210); tr->sky_horizon = col(214, 222, 228); tr->fog = col(214, 220, 226);
+        build_road(tr, col(236, 236, 240), col(220, 60, 40), grass);
+        scenery_fundidora(tr);
+        build_world(tr, col(96, 146, 70), col(104, 150, 76), col(110, 112, 116));
+        add_silla(tr);
+        tr->fog_start = 800.0f; tr->fog_end = 3600.0f; tr->zfar = 4200.0f;
+        break;
+    case TRACK_CUMBRES:
+        grass = col(92, 146, 74);
+        tr->sky_top = col(36, 92, 200); tr->sky_horizon = col(196, 218, 240); tr->fog = col(206, 222, 240);
+        build_road(tr, col(230, 232, 238), col(200, 40, 40), grass);
+        scenery_cumbres(tr);
+        build_world(tr, col(92, 146, 74), col(86, 138, 70), col(90, 100, 120));
+        add_cordillera_sur(tr);
+        tr->fog_start = 900.0f; tr->fog_end = 4400.0f; tr->zfar = 5000.0f;
         break;
     case TRACK_TUCAN:
         grass = col(100, 150, 70);
