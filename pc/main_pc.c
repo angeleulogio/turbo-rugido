@@ -1,9 +1,12 @@
+#include <stdlib.h>
 /* main_pc.c - pruebas automaticas en PC: simula carreras y guarda capturas */
 #include <stdio.h>
 #include "../source/plat.h"
 #include "../source/game.h"
 #include "../source/race.h"
 #include "../source/track.h"
+#include "../source/cars.h"
+#include <string.h>
 
 void pc_set_pads(const PadIn p[2]);
 void pc_save_ppm(const char *path);
@@ -23,13 +26,15 @@ static void press(unsigned btn, int frames_after) {
 
 /* simulacion sin graficos: un jugador con piloto automatico */
 static void sim_test(int trk, int mode, int car) {
+    int police = mode >= 100, close_f = 0, busts = 0, maxheat = 0, rb = 0, pcrash = 0;
+    if (police) mode -= 100;
     static Track tr;
     static Race r;
     int cars[2] = {car, 1};
     int f, laps_done = 0, walls = 0, crashes = 0, nan = 0;
     float lap_t[8] = {0}, last = 0, maxspd = 0;
     track_build(&tr, trk);
-    race_setup(&r, &tr, (PhysMode)mode, 1, cars);
+    race_setup(&r, &tr, (PhysMode)mode, 1, cars, police);
     for (f = 0; f < 60 * 420; f++) {
         PadIn p[2];
         Entity *pl = &r.ent[RACERS - 1];
@@ -45,7 +50,10 @@ static void sim_test(int trk, int mode, int car) {
             race_update(&r, p, 1.0f / 60.0f);
             if (pl->lap > prev_lap && pl->lap >= 2) { lap_t[laps_done++ & 7] = r.time - last; last = r.time; }
             else if (pl->lap > prev_lap) last = r.time;
-            if (pl->crashed && !prev_crash) crashes++;
+            if (pl->crashed && !prev_crash) { crashes++; if (pl->crash_t < 0) busts++; }
+            if (r.heat > maxheat) maxheat = r.heat;
+            if (r.siren > 0.85f) close_f++;
+            { int q; for (q = POLICE_BASE; q < ENT_MAX; q++) { if (r.ent[q].roadblock && r.ent[q].rb_t > 29.98f) rb++; if (r.ent[q].crashed && r.ent[q].crash_t < 0.02f && r.ent[q].crash_t > 0) pcrash++; } }
         }
         if (pl->veh.wall_impact > 3.0f) walls++;
         {
@@ -62,6 +70,7 @@ static void sim_test(int trk, int mode, int car) {
         for (i = 0; i < laps_done && i < 4; i++) printf(" %.1f", lap_t[i]);
         printf(" | pos=%d muros=%d choques=%d vmax=%.0fkmh nan=%d | IA:", r.ent[RACERS - 1].place, walls, crashes, maxspd * 3.6f, nan);
         for (i = 0; i < RACERS - 1; i++) printf(" %d%s", r.ent[i].place, r.ent[i].finished ? "" : "*");
+        if (police) printf(" | POLICIA calor=%d detenido=%d retenes=%d patrullasfuera=%d cerca=%.0f%%", maxheat, busts, rb, pcrash, 100.0f * close_f / (r.time * 60.0f));
         printf("\n");
     }
     {
@@ -85,7 +94,104 @@ int main(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "sim") == 0) {
         for (t = 0; t < TRACK_COUNT; t++)
             for (m = 0; m < MODE_COUNT; m++) sim_test(t, m, m == 2 ? 1 : 0);
-        sim_test(4, 0, 5); sim_test(6, 2, 5); sim_test(7, 1, 5); sim_test(9, 0, 0); sim_test(9, 2, 5); sim_test(10, 1, 2); sim_test(10, 2, 1); sim_test(11, 0, 3); sim_test(11, 2, 6); sim_test(12, 1, 4); sim_test(12, 2, 7); sim_test(13, 0, 6); sim_test(13, 2, 1);
+        sim_test(4, 0, 5); sim_test(6, 2, 5); sim_test(7, 1, 5); sim_test(21, 0, 0); sim_test(21, 1, 7); sim_test(21, 2, 4); sim_test(22, 0, 0); sim_test(22, 1, 7); sim_test(22, 2, 4);
+        return 0;
+    }
+    if (argc > 1 && strcmp(argv[1], "uno") == 0) { sim_test(atoi(argv[2]), atoi(argv[3]), 0); return 0; }
+    if (argc > 1 && strcmp(argv[1], "police") == 0) {
+        for (t = 0; t < TRACK_COUNT; t += 3)
+            for (m = 0; m < MODE_COUNT; m++) sim_test(t, 100 + m, m == 2 ? 1 : 0);
+        return 0;
+    }
+    if (argc > 2 && strcmp(argv[1], "recorrido") == 0) {
+        int tk = atoi(argv[2]), f, q = 0;
+        extern Race *pc_race(void);
+        game_init();
+        game_debug_start_race(tk, 0, 1, 1, 2);
+        for (f = 0; f < 60 * 100; f++) {
+            PadIn p[2];
+            Race *r = pc_race();
+            int k;
+            memset(p, 0, sizeof(p));
+            for (k = 0; k < RACERS; k++) if (r->ent[k].is_player) {
+                CarInput in = race_autopilot(r, &r->ent[k], 1.0f/60.0f);
+                p[0].sx = in.steer; p[0].trig_r = in.throttle; p[0].trig_l = in.brake;
+            }
+            game_frame(p, 1.0f / 60.0f);
+            if (f > 240 && f % (60 * 8) == 0) { char nm[64]; snprintf(nm, sizeof(nm), "r%02d_%02d", tk, q++); shot(nm); }
+        }
+        return 0;
+    }
+    if (argc > 1 && strcmp(argv[1], "fotos_choques") == 0) {
+        int f, got_crash = 0, got_wreck = 0, got_hit = 0, q;
+        extern Race *pc_race(void);
+        game_init();
+        game_frame(none, 1.0f / 60.0f);
+        press(BTN_START, 2); press(BTN_A, 2); press(BTN_A, 2); press(BTN_A, 2); press(BTN_A, 30);
+        for (q = 0; q < 8; q++) press(BTN_RIGHT, 2);
+        shot("c00_patrulla");
+        { extern void game_debug_damage_preview(int car); game_debug_damage_preview(CAR_POLICE); }
+        press(0, 40); shot("c05_abollado");
+        press(0, 50); shot("c06_abollado2");
+        game_debug_start_race(0, 1, 1, CAR_POLICE, 1);
+        for (f = 0; f < 60 * 200 && !(got_crash && got_wreck && got_hit >= 2); f++) {
+            PadIn p[2];
+            Race *r = pc_race();
+            Entity *pl = NULL;
+            int k;
+            memset(p, 0, sizeof(p));
+            for (k = 0; k < RACERS; k++) if (r->ent[k].is_player) pl = &r->ent[k];
+            if (!pl->crashed && !pl->finished && r->state == RS_RUNNING) {
+                CarInput in = race_autopilot(r, pl, 1.0f/60.0f);
+                p[0].sx = in.steer; p[0].trig_r = in.throttle; p[0].trig_l = in.brake;
+                if (pl->veh.boost > 0.5f) p[0].held |= BTN_X;
+            }
+            game_frame(p, 1.0f / 60.0f);
+            if (!got_crash && pl->crashed && pl->crash_t > 0.45f && pl->crash_t < 0.5f) { shot("c01_choque_ruedas"); got_crash = 1; }
+            for (k = 0; k < WRECK_MAX && !got_wreck; k++) {
+                Wreck *w = &r->wreck[k];
+                float rel = w->s - pl->s;
+                if (w->active && !pl->crashed && rel > 7.0f && rel < 16.0f && fabsf(w->d - pl->d) < 6.0f) { shot("c02_restos"); got_wreck = 1; }
+            }
+            if (got_hit < 2 && pl->crashed == 0 && pl->invuln <= 0 && strstr(r->view[0].msg, "RESTOS") && r->view[0].msg_t > 1.9f) {
+                shot(got_hit ? "c04_restos_nitro2" : "c03_restos_nitro"); got_hit++;
+            }
+        }
+        printf("choque=%d restos=%d nitro_restos=%d\n", got_crash, got_wreck, got_hit);
+        return 0;
+    }
+    if (argc > 1 && strcmp(argv[1], "fotos_policia") == 0) {
+        static const int tk[4] = {3, 13, 18, 10}, md[4] = {3, 0, 1, 3};
+        int q;
+        game_init();
+        game_frame(none, 1.0f / 60.0f);
+        press(BTN_START, 2); press(BTN_A, 2);
+        press(BTN_DOWN, 1); press(BTN_DOWN, 1); press(BTN_DOWN, 2); shot("p01_fisica");
+        press(BTN_A, 2); press(BTN_DOWN, 2); shot("p02_policia");
+        for (q = 0; q < 4; q++) {
+            int f;
+            char nm[64];
+            game_debug_start_race(tk[q], 100 + md[q], 1, q * 2, 1);
+            for (f = 0; f < 60 * (40 + q * 15); f++) {
+                PadIn p[2];
+                extern Race *pc_race(void);
+                Race *r = pc_race();
+                int k;
+                memset(p, 0, sizeof(p));
+                for (k = 0; k < RACERS; k++) {
+                    Entity *e = &r->ent[k];
+                    if (e->is_player) {
+                        CarInput in = race_autopilot(r, e, 1.0f/60.0f);
+                        p[0].sx = in.steer; p[0].trig_r = in.throttle; p[0].trig_l = in.brake;
+                        if (e->veh.boost > 0.4f) p[0].held |= BTN_X;
+                        if (r->siren > 0.7f && r->view[0].slow > 0.3f && f > 60 * 30) p[0].held |= BTN_Y;
+                    }
+                }
+                game_frame(p, 1.0f / 60.0f);
+            }
+            snprintf(nm, sizeof(nm), "p1%d_persecucion", q);
+            shot(nm);
+        }
         return 0;
     }
     game_init();

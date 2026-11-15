@@ -10,6 +10,7 @@ typedef enum {
     MODE_DERRAPE = 0,   /* arcade de derrapes largos (estilo Ridge Racer) */
     MODE_CHOQUES,       /* arcade agresivo con turbo y choques (estilo Burnout) */
     MODE_SIM,           /* semi-simulacion (estilo Gran Turismo) */
+    MODE_CALLE,         /* arcade callejero con peso: nitro, derrapes al girar fuerte y camara lenta */
     MODE_COUNT
 } PhysMode;
 
@@ -18,6 +19,7 @@ typedef struct {
     float throttle;  /* 0..1 */
     float brake;     /* 0..1 */
     int boost;       /* boton de turbo */
+    int slowmo;      /* boton de camara lenta (CALLE) */
 } CarInput;
 
 typedef struct {
@@ -43,6 +45,7 @@ typedef struct {
     int boosting;
     float wall_impact;   /* > 0 si choco contra el muro este paso */
     float slip;          /* angulo de deslizamiento visible */
+    float hard_t;        /* tiempo girando a fondo (CALLE) */
 } Vehicle;
 
 const char *mode_name(int mode);

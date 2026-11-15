@@ -15,6 +15,8 @@ const CarSpec CAR_SPECS[CAR_COUNT] = {
     {"ATLAS 84", "SEDAN CLASICO DE LOS 80", 0.64f, 0.70f, 0.84f, 64.0f, 9.0f, 1.10f, 1.18f, 1250, 200000, 1.10f, 0, 0.52f, 6, {64, 94, 142, 255}, {196, 198, 204, 255}},
     /* dibujado por el jugador: sedan frances con motor V10 de competicion */
     {"LUTECE V10", "SEDAN CON MOTOR V10 DE CARRERAS", 1.00f, 0.92f, 0.55f, 78.0f, 11.0f, 0.95f, 1.02f, 1350, 380000, 1.08f, 0, 0.44f, 7, {28, 58, 150, 255}, {200, 206, 216, 255}},
+    /* la patrulla de las persecuciones: pesada y estable, con torreta */
+    {"PATRULLA", "INTERCEPTOR DE LA POLICIA", 0.86f, 0.80f, 0.72f, 72.0f, 10.0f, 1.04f, 0.98f, 1520, 290000, 1.10f, 0, 0.52f, 8, {24, 24, 30, 255}, {245, 245, 250, 255}},
 };
 
 const Col CAR_ALT_PAINTS[6] = {
@@ -77,8 +79,12 @@ static void cabin(Mesh *m, float z0, float z1, float ybase, float yroof, float w
     }
 }
 
+int g_wheel_first[4], g_wheel_count[4];
+static int g_wheel_n;
+
 static void wheel(Mesh *m, float x, float z, float r, float w) {
     int k, S = 8;
+    int first = m->n;
     float side = x > 0 ? 1.0f : -1.0f;
     float xi = x - side * w * 0.5f, xo = x + side * w * 0.5f;
     Col tire = col(26, 26, 28), hub = col(180, 180, 188);
@@ -89,6 +95,15 @@ static void wheel(Mesh *m, float x, float z, float r, float w) {
         mesh_quad(m, p0, p1, q1, q0, tire);
         mesh_tri(m, v3(xo, r, z), q0, q1, (k & 1) ? hub : col_shade(hub, 0.8f));
     }
+    if (g_wheel_n < 4) { g_wheel_first[g_wheel_n] = first; g_wheel_count[g_wheel_n] = m->n - first; g_wheel_n++; }
+}
+
+void wheel_build_mesh(Mesh *m) {
+    int i;
+    mesh_init(m);
+    g_wheel_n = 4;
+    wheel(m, 0.14f, 0, 0.35f, 0.28f);
+    for (i = 0; i < m->n; i++) { m->v[i].x -= 0.14f; m->v[i].y -= 0.35f; }
 }
 
 static void lights(Mesh *m, float zf, float zr, float y, float wx, float yr) {
@@ -109,7 +124,20 @@ static void stripe(Mesh *m, const Sec *sec, int ns, float hw, Col c) {
 
 void car_build_mesh(Mesh *m, int shape, Col paint, Col accent) {
     Col dark = col(30, 30, 34), glass = col(36, 52, 80);
+    if (shape == 8) {
+        /* patrulla: carroceria del coupe en negro, puertas blancas y base de la torreta */
+        Col white = accent;
+        car_build_mesh(m, 1, paint, paint);
+        mesh_box(m, v3(-0.995f, 0.42f, -0.55f), v3(-0.975f, 0.84f, 1.05f), white, white);
+        mesh_box(m, v3(0.975f, 0.42f, -0.55f), v3(0.995f, 0.84f, 1.05f), white, white);
+        mesh_box(m, v3(-0.66f, 1.34f, 0.06f), v3(0.66f, 1.38f, 0.44f), dark, dark);
+        mesh_box(m, v3(-0.60f, 1.38f, 0.12f), v3(-0.04f, 1.53f, 0.38f), col(150, 30, 30), col(150, 30, 30));
+        mesh_box(m, v3(0.04f, 1.38f, 0.12f), v3(0.60f, 1.53f, 0.38f), col(30, 60, 160), col(30, 60, 160));
+        mesh_box(m, v3(-0.6f, 0.30f, -2.30f), v3(0.6f, 0.58f, -2.20f), dark, dark);   /* defensa de empuje */
+        return;
+    }
     mesh_init(m);
+    g_wheel_n = 0;
     switch (shape) {
     case 0: { /* cuna superdeportiva */
         Sec s[] = {{-2.25f, 0.86f, 0.22f, 0.42f, 0.50f}, {-1.40f, 0.98f, 0.20f, 0.52f, 0.74f},
@@ -352,6 +380,7 @@ void car_build_mesh(Mesh *m, int shape, Col paint, Col accent) {
 void traffic_build_mesh(Mesh *m, int kind, Col paint) {
     Col dark = col(34, 34, 38), glass = col(40, 56, 80);
     mesh_init(m);
+    g_wheel_n = 0;
     if (kind == 0) { /* sedan */
         mesh_box(m, v3(-0.9f, 0.25f, -2.2f), v3(0.9f, 0.85f, 2.2f), paint, paint);
         cabin(m, -0.9f, 1.2f, 0.85f, 1.42f, 0.84f, 0.74f, 0.45f, 0.35f, paint, glass);

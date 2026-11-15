@@ -1,11 +1,12 @@
 /* vehicle.c - fisica de los autos: 2 modos arcade y 1 semi-simulacion */
 #include "vehicle.h"
 
-static const char *MODE_NAMES[MODE_COUNT] = { "ARCADE DERRAPE", "ARCADE CHOQUES", "SIMULACION" };
+static const char *MODE_NAMES[MODE_COUNT] = { "ARCADE DERRAPE", "ARCADE CHOQUES", "SIMULACION", "CALLEJERO" };
 static const char *MODE_DESCS[MODE_COUNT] = {
     "DERRAPES LARGOS Y RAPIDOS",
     "TURBO, TRAFICO Y TAKEDOWNS",
-    "PESO, FRENADA Y AGARRE REAL"
+    "PESO, FRENADA Y AGARRE REAL",
+    "NITRO, DERRAPES Y CAMARA LENTA"
 };
 
 const char *mode_name(int m) { return (m >= 0 && m < MODE_COUNT) ? MODE_NAMES[m] : "?"; }
@@ -76,18 +77,29 @@ void veh_set_velocity(Vehicle *v, PhysMode mode, V3 vel) {
 static void arcade_step(Vehicle *v, PhysMode mode, const CarInput *in, const Track *tr, float dt) {
     const CarSpec *sp = v->spec;
     int choques = (mode == MODE_CHOQUES);
+    int calle = (mode == MODE_CALLE);
     float vmax = sp->vmax, acc = sp->accel;
     float spd = v->speed, aspd = fabsf(spd);
     float steer = clampf(in->steer, -1, 1);
     float slip;
 
-    /* turbo (solo CHOQUES) */
+    /* CALLE: direccion con algo de peso (no gira de golpe) */
+    if (calle) {
+        v->steer_cur = approach(v->steer_cur, steer, 4.5f * dt);
+        steer = v->steer_cur;
+        vmax *= 1.06f;
+    }
+
+    /* turbo / nitro: CHOQUES, DERRAPE y CALLE */
     v->boosting = 0;
-    if (choques && in->boost && v->boost > 0.01f && in->brake < 0.3f) {
+    if (in->boost && v->boost > 0.01f && in->brake < 0.3f) {
+        float mv = choques ? 1.24f : (calle ? 1.20f : 1.18f);
+        float ma = choques ? 1.8f : (calle ? 1.7f : 1.6f);
+        float drain = choques ? 0.20f : (calle ? 0.30f : 0.25f);
         v->boosting = 1;
-        vmax *= 1.24f;
-        acc *= 1.8f;
-        v->boost -= 0.20f * dt;
+        vmax *= mv;
+        acc *= ma;
+        v->boost -= drain * dt;
         if (v->boost < 0) v->boost = 0;
     }
 
@@ -95,10 +107,10 @@ static void arcade_step(Vehicle *v, PhysMode mode, const CarInput *in, const Tra
     if (in->throttle > 0.05f && spd > -0.5f) {
         float k = 1.0f - (spd / vmax) * (spd / vmax);
         if (spd > vmax) spd -= (spd - vmax) * 0.8f * dt;
-        else spd += acc * in->throttle * clampf(k, 0.05f, 1.0f) * dt * (v->boosting ? 1.0f : 1.0f);
+        else spd += acc * in->throttle * clampf(k, 0.05f, 1.0f) * dt;
     }
     if (in->brake > 0.05f) {
-        if (spd > 0.5f) spd -= (choques ? 22.0f : 19.0f) * in->brake * dt;
+        if (spd > 0.5f) spd -= (choques ? 22.0f : (calle ? 20.0f : 19.0f)) * in->brake * dt;
         else if (in->throttle < 0.05f) spd = approach(spd, -9.0f, 7.0f * in->brake * dt);
     }
     /* resistencia */
@@ -106,40 +118,51 @@ static void arcade_step(Vehicle *v, PhysMode mode, const CarInput *in, const Tra
     if (fabsf(spd) < 0.05f && in->throttle < 0.05f && in->brake < 0.05f) spd = 0;
     aspd = fabsf(spd);
 
+    /* CALLE: el nitro se recarga solo yendo rapido */
+    if (calle && aspd > vmax * 0.6f && !v->boosting) v->boost = clampf(v->boost + 0.035f * dt, 0, 1);
+
     /* deteccion de inicio de derrape */
     if (in->throttle < 0.2f) v->gas_off_t = 0; else v->gas_off_t += dt;
+    if (fabsf(steer) > 0.85f && in->throttle > 0.5f) v->hard_t += dt; else v->hard_t = 0;
     if (!v->drifting && aspd > 20.0f && fabsf(steer) > 0.45f && spd > 0) {
         int brake_tap = (in->brake > 0.3f && v->prev_brake <= 0.3f);
-        int gas_flick = (!choques && in->throttle > 0.5f && v->prev_throttle <= 0.5f && v->gas_off_t < 0.45f);
-        if (brake_tap || gas_flick) {
+        int gas_flick = (mode == MODE_DERRAPE && in->throttle > 0.5f && v->prev_throttle <= 0.5f && v->gas_off_t < 0.45f);
+        /* CALLE: girar a fondo a buena velocidad hace que la cola se suelte sola */
+        int power_slide = (calle && aspd > 28.0f && v->hard_t > 0.25f);
+        if (brake_tap || gas_flick || power_slide) {
             v->drifting = 1;
             /* patada inicial hacia el interior de la curva */
-            v->yaw += signf(steer) * (choques ? 0.10f : 0.16f) * sp->drift;
+            v->yaw += signf(steer) * (choques ? 0.10f : (calle ? 0.08f : 0.16f)) * sp->drift;
         }
     }
     v->prev_throttle = in->throttle;
     v->prev_brake = in->brake;
 
     if (v->drifting) {
-        float Kd = (choques ? 1.25f : 1.55f) * sp->turn * sp->drift;
-        float kth = choques ? 2.4f : 1.35f;
-        float maxslip = choques ? 0.62f : 0.85f;
+        float Kd = (choques ? 1.25f : (calle ? 1.35f : 1.55f)) * sp->turn * sp->drift;
+        float kth = choques ? 2.4f : (calle ? 1.9f : 1.35f);
+        float maxslip = choques ? 0.62f : (calle ? 0.55f : 0.85f);
         v->yaw += steer * Kd * dt;
         slip = wrap_angle(v->yaw - v->veldir);
         v->veldir += kth * slip * dt;
         slip = wrap_angle(v->yaw - v->veldir);
         if (fabsf(slip) > maxslip) v->veldir = v->yaw - signf(slip) * maxslip;
         /* perdida de velocidad leve */
-        spd -= ((choques ? 1.2f : 0.8f) + (choques ? 4.0f : 2.6f) * fabsf(sinf(slip))) * dt;
-        if (choques) v->boost = clampf(v->boost + 0.10f * dt, 0, 1);
+        spd -= ((choques ? 1.2f : (calle ? 1.0f : 0.8f)) + (choques ? 4.0f : (calle ? 3.0f : 2.6f)) * fabsf(sinf(slip))) * dt;
+        /* derrapar recarga el turbo */
+        if (!v->boosting) v->boost = clampf(v->boost + (choques ? 0.10f : (calle ? 0.08f : 0.16f)) * dt, 0, 1);
         /* salida del derrape */
         if ((fabsf(slip) < 0.07f && fabsf(steer) < 0.35f) || spd < 12.0f ||
-            (signf(steer) != signf(slip) && fabsf(steer) > 0.3f && fabsf(slip) < 0.12f)) {
+            (signf(steer) != signf(slip) && fabsf(steer) > 0.3f && fabsf(slip) < 0.12f) ||
+            (calle && fabsf(steer) < 0.5f && fabsf(slip) < 0.15f)) {
             v->drifting = 0;
         }
     } else {
-        float agrip = (choques ? 20.0f : 15.0f) * sp->turn;
-        float rate = steer * fminf(1.9f * sp->turn, agrip / fmaxf(aspd, 4.0f));
+        float agrip = (choques ? 20.0f : (calle ? 17.0f : 15.0f)) * sp->turn;
+        float rate;
+        /* CALLE: un poco menos de agarre a muy alta velocidad */
+        if (calle) agrip *= 1.0f - 0.22f * clampf((aspd - 40.0f) / 40.0f, 0, 1);
+        rate = steer * fminf(1.9f * sp->turn, agrip / fmaxf(aspd, 4.0f));
         if (aspd < 4.0f) rate *= aspd / 4.0f;
         if (spd < 0) rate = -rate;
         v->yaw += rate * dt;
@@ -148,9 +171,9 @@ static void arcade_step(Vehicle *v, PhysMode mode, const CarInput *in, const Tra
             float diff = wrap_angle(track_heading(v->tan) - v->yaw);
             if (fabsf(diff) < 0.5f) v->yaw += diff * 1.1f * dt;
         }
-        /* la velocidad sigue al morro con un leve deslizamiento */
+        /* la velocidad sigue al morro con un leve deslizamiento (mas en CALLE: se siente el peso) */
         slip = wrap_angle(v->yaw - v->veldir);
-        v->veldir += slip * fminf(1.0f, 11.0f * dt);
+        v->veldir += slip * fminf(1.0f, (calle ? 7.0f : 11.0f) * dt);
     }
     v->yaw = wrap_angle(v->yaw);
     v->veldir = wrap_angle(v->veldir);
@@ -326,7 +349,7 @@ void veh_step(Vehicle *v, PhysMode mode, const CarInput *in, const Track *tr, fl
         v->d = side * lim;
         if (vn > 0) {
             V3 vt;
-            float scrape = (mode == MODE_SIM) ? 0.07f : (mode == MODE_CHOQUES ? 0.04f : 0.03f);
+            float scrape = (mode == MODE_SIM) ? 0.07f : (mode == MODE_CHOQUES || mode == MODE_CALLE ? 0.04f : 0.03f);
             vel = vsub(vel, vscale(nrm, vn * 1.25f));
             vt = vsub(vel, vscale(nrm, vdot(vel, nrm)));
             vel = vadd(vscale(vt, 1.0f - scrape - 0.004f * vn), vscale(nrm, vdot(vel, nrm)));

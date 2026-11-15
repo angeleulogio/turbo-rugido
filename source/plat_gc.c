@@ -293,6 +293,10 @@ static s16 *sfx_buf[SFX_COUNT];
 static int sfx_len[SFX_COUNT];
 static int sfx_rate[SFX_COUNT];
 static int sfx_voice = 2;
+#define SIREN_VOICE 10
+#define SIREN_RATE 32000
+static s16 *siren_buf;
+static int siren_bytes, siren_on;
 
 static s16 *alloc_snd(int samples, int *bytes) {
     int b = (samples * 2 + 31) & ~31;
@@ -366,6 +370,34 @@ static void audio_init(void) {
     make_sfx(SFX_BUMP, 0.12f, 32000, 2, 0);
     make_sfx(SFX_BOOST, 0.6f, 32000, 3, 0);
     make_sfx(SFX_SELECT, 0.06f, 32000, 0, 1320.0f);
+    /* sirena: tono que sube y baja en un ciclo de 1.2 s */
+    {
+        int n = (int)(SIREN_RATE * 1.2f), k;
+        float ph = 0;
+        siren_buf = alloc_snd(n, &siren_bytes);
+        for (k = 0; k < n; k++) {
+            float t = (float)k / n;
+            float f = 650.0f + 450.0f * (0.5f - 0.5f * cosf(2.0f * (float)M_PI * t));
+            ph += f / SIREN_RATE;
+            siren_buf[k] = (s16)(sinf(2.0f * (float)M_PI * ph) * 0.6f * 14000.0f + ((ph - floorf(ph)) < 0.5f ? 3000 : -3000));
+        }
+        DCFlushRange(siren_buf, siren_bytes);
+    }
+}
+
+void plat_siren(float vol) {
+    s32 v = (s32)(clampf(vol, 0, 1) * 150.0f);
+    if (!siren_buf) return;
+    if (v < 4) {
+        if (siren_on) { ASND_StopVoice(SIREN_VOICE); siren_on = 0; }
+        return;
+    }
+    if (!siren_on || ASND_StatusVoice(SIREN_VOICE) == SND_UNUSED) {
+        ASND_SetInfiniteVoice(SIREN_VOICE, VOICE_MONO_16BIT, SIREN_RATE, 0, siren_buf, siren_bytes, v, v);
+        siren_on = 1;
+    } else {
+        ASND_ChangeVolumeVoice(SIREN_VOICE, v, v);
+    }
 }
 
 void plat_engine(int player, int on, float rpm01, float load) {

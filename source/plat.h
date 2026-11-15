@@ -43,5 +43,6 @@ void plat_read_pads(PadIn pads[2]);
 enum { SFX_BEEP = 0, SFX_GO, SFX_CRASH, SFX_BUMP, SFX_BOOST, SFX_SELECT, SFX_COUNT };
 void plat_engine(int player, int on, float rpm01, float load);
 void plat_sfx(int id);
+void plat_siren(float vol);       /* sirena de policia en bucle (0 = apagada) */
 
 #endif

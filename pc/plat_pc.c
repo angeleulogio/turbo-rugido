@@ -154,6 +154,7 @@ void plat_read_pads(PadIn pads[2]) { pads[0] = script_pads[0]; pads[1] = script_
 
 void plat_engine(int player, int on, float rpm01, float load) { (void)player; (void)on; (void)rpm01; (void)load; }
 void plat_sfx(int id) { (void)id; }
+void plat_siren(float vol) { (void)vol; }
 
 void pc_save_ppm(const char *path) {
     FILE *f = fopen(path, "wb");

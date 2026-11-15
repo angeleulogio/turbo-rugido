@@ -3762,6 +3762,24 @@ void track_build_centerline(Track *tr, int id) {
     }
     tr->wall = tr->hw + 1.7f;
     finalize_centerline(tr);
+    /* el suelo plano esta en y = -0.1: si el camino baja de ahi, el pasto lo tapa.
+       Se levantan suavemente los tramos bajos (maximo suave, sin escalones) */
+    {
+        float ymin = 1e9f;
+        for (i = 0; i < tr->n; i++) ymin = fminf(ymin, tr->p[i].y);
+        if (ymin < -0.05f && id != TRACK_TUCAN && id != TRACK_AZTLAN && id != TRACK_ESPINAZO) {
+            const float b = 0.12f, k = 0.6f;
+            for (i = 0; i < tr->n; i++) {
+                float y = tr->p[i].y;
+                float h = clampf(0.5f + 0.5f * (y - b) / k, 0, 1);
+                tr->p[i].y = lerpf(b, y, h) + k * h * (1 - h);
+            }
+            for (i = 0; i < tr->n; i++) {
+                V3 a = tr->p[(i - 1 + tr->n) % tr->n], c = tr->p[(i + 1) % tr->n];
+                tr->t[i] = vnorm(vsub(c, a));
+            }
+        }
+    }
 
     for (i = 0; i < tr->n; i++) {
         tr->bridge[i] = (id == TRACK_OCHO && tr->p[i].y > 1.2f);

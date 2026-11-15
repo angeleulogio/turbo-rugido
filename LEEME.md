@@ -5,12 +5,14 @@ Todas las pistas, autos, sonidos y textos están generados por código: es un di
 
 ## Contenido
 
-- **3 físicas** que se eligen en el menú:
-  - **ARCADE DERRAPE**: derrapes largos y estables, sin daños.
-  - **ARCADE CHOQUES**: turbo que se gana arriesgando, tráfico, takedowns y choques con cámara lenta.
+- **4 físicas** que se eligen en el menú:
+  - **ARCADE DERRAPE**: derrapes largos y estables, sin daños. Derrapar llena la barra de turbo (X).
+  - **ARCADE CHOQUES**: turbo que se gana arriesgando, tráfico, takedowns y choques con cámara lenta. Los autos se abollan donde reciben el golpe y en los choques fuertes salen volando una o dos ruedas. Los restos se quedan en la pista como obstáculo durante 45 segundos; si un rival, el tráfico o una patrulla choca con los restos de tu auto, ganas nitro. Al reaparecer, tu auto vuelve como nuevo.
   - **SIMULACION**: transferencia de peso, límite de agarre, tracción trasera, delantera o 4x4, ABS y controles de tracción y estabilidad.
-- **14 pistas**: CIRCUITO OCHO (con puente), FORTALEZA AZUL (castillo y jardines), VALLE DEL TUNEL (colinas y túnel), tres trazados dibujados a mano por el jugador (BURGOS, MONTE FUJI y CASTELLOLI) y dos diseñados por su hermano: SUPEROVALO (óvalo con infield, gradas y torres de luz al atardecer) y COSTA ALTA (ciudad costera que sube del mar a la montaña), y PARQUE TUCAN, el recorrido real del parque de Monterrey agrandado a escala: parque hundido entre colonias, con el cerro de roca detrás. Y cinco trazados más dibujados por el jugador y ambientados en paisajes de México: DESIERTO SONORA (saguaros y mesetas rojas), SELVA MAYA (selva, pirámide y cenotes), LOS VOLCANES (bosque de pinos y dos volcanes nevados), CAMPOS DE AGAVE (hileras de agave azul, hacienda y volcán) y BAJA CALIFORNIA (carretera entre la sierra y el mar, con cardones y un arco de roca).
-- **8 autos**: FURIA R, COMETA GT, TORMENTA 4X, BRISA V12, HAYASHI INCEPTION (sedán de 4 puertas diseñado por el hermano del jugador, con tracción 4x4), y tres dibujados por el jugador: YILDIZ GT (superdeportivo en cuña de los 80) ATLAS 84 (sedán cuadrado de los 80, tracción trasera y muy fácil de derrapar) y LUTECE V10 (sedán con motor V10 de carreras, el más rápido del juego).
+  - **CALLEJERO**: auto con peso y buen agarre que se desliza de lado si giras fuerte a alta velocidad. Tráfico en la calle, nitro (X) que se recarga yendo rápido, derrapando y rozando autos, y cámara lenta a voluntad (Y, solo con 1 jugador).
+- **Persecución policial** opcional en cualquier física (menú POLICIA): las patrullas te alcanzan, se te pegan y te embisten. El nivel de BUSQUEDA (1 a 5) sube con el tiempo y trae más patrullas; desde el nivel 3 aparecen retenes con un hueco para pasar. Si te quedas casi parado con una patrulla encima durante 3 segundos, te DETIENEN. Si las dejas atrás y no ves ninguna durante 15 segundos, la búsqueda baja. Un choque fuerte puede sacar a una patrulla de la carrera.
+- **23 pistas**: CIRCUITO OCHO (con puente), FORTALEZA AZUL (castillo y jardines), VALLE DEL TUNEL (colinas y túnel), tres trazados dibujados a mano por el jugador (BURGOS, MONTE FUJI y CASTELLOLI) y dos diseñados por su hermano: SUPEROVALO (óvalo con infield, gradas y torres de luz al atardecer) y COSTA ALTA (ciudad costera que sube del mar a la montaña), y PARQUE TUCAN, el recorrido real del parque de Monterrey agrandado a escala: parque hundido entre colonias, con el cerro de roca detrás. Y cinco trazados más dibujados por el jugador y ambientados en paisajes de México: DESIERTO SONORA (saguaros y mesetas rojas), SELVA MAYA (selva, pirámide y cenotes), LOS VOLCANES (bosque de pinos y dos volcanes nevados), CAMPOS DE AGAVE (hileras de agave azul, hacienda y volcán) y BAJA CALIFORNIA (carretera entre la sierra y el mar, con cardones y un arco de roca). Además, CUMBRES NEVADAS: recta principal plana en el fondo del valle, el lado sur más alto con pinos y chalets, y una cordillera nevada al sur. Y PARQUE FUNDIDORA, el antiguo autódromo del parque de Monterrey: alto horno, chimeneas y naves de ladrillo, el lago, el canal y el cerro de dos jorobas al fondo. Y VILLA OLIMPICA, inspirada en un parque deportivo de San Bernabé: estadio con pebetero, alberca, velódromo, residencias de atletas, canchas y banderas. Y PARQUE ACUATICO, en la falda de un cerro: albercas en terrazas, torres de toboganes, río lento, palapas y palmeras. Y EL SEMINARIO, por las calles alrededor de un seminario de Monterrey: claustros de tejado rojo, capilla con campanario, universidad, glorieta, colonia y autopista. Y ISLA DEL SOL: circuito en una isla tropical rodeada de mar turquesa, con playas, hoteles con alberca, palapas, sombrillas, palmeras, lanchas y un muelle. Y ESPINAZO: en la cima de una cresta de la sierra, con barrancos a ambos lados, nubes en el valle y un festival de carreras en el centro (escenario, rueda de la fortuna, carpas y banderines). Además CAMPOS DEL TREN (cultivos, granjas, molinos, vacas, árboles variados y una vía férrea con un tren de carga junto a la recta superior) y BOSQUE DENSO (camino entre cientos de árboles, troncos caídos, rocas y hongos, con neblina).
+- **9 autos**: FURIA R, COMETA GT, TORMENTA 4X, BRISA V12, HAYASHI INCEPTION (sedán de 4 puertas diseñado por el hermano del jugador, con tracción 4x4), y tres dibujados por el jugador: YILDIZ GT (superdeportivo en cuña de los 80) ATLAS 84 (sedán cuadrado de los 80, tracción trasera y muy fácil de derrapar) y LUTECE V10 (sedán con motor V10 de carreras, el más rápido del juego). Además la PATRULLA, el mismo auto de las persecuciones, con su torreta encendida.
 - 3 rivales controlados por la IA, 3 vueltas, posiciones, mejor vuelta, minimapa, pausa y pantalla de resultados.
 
 ## Controles (mando de GameCube)
@@ -20,13 +22,15 @@ Todas las pistas, autos, sonidos y textos están generados por código: es un di
 | Palanca / cruceta | Dirección y menús |
 | A o gatillo R (analógico) | Acelerar |
 | B o gatillo L (analógico) | Frenar / marcha atrás |
-| X | Turbo (modo CHOQUES) |
+| X | Turbo / nitro (DERRAPE, CHOQUES y CALLEJERO) |
+| Y | Cámara lenta (CALLEJERO, 1 jugador) |
 | Z | Cambiar cámara (cerca / lejos) |
 | START | Pausa |
 
 **Cómo derrapar:**
 - En ARCADE DERRAPE: a buena velocidad, gira y toca el freno, o suelta y vuelve a pisar el acelerador. Para salir del derrape, endereza o contravolantea.
 - En ARCADE CHOQUES: gira y toca el freno.
+- En CALLEJERO: gira a fondo con el acelerador pisado a más de 100 km/h.
 
 En SIMULACION los gatillos analógicos permiten acelerar y frenar de forma gradual.
 
@@ -79,9 +83,9 @@ Los números están en `source/vehicle.c` y en `CAR_SPECS` (`source/cars.c`). Ah
 
 ### Pruebas en PC (opcional, Linux o MSYS2)
 
-- `make -f Makefile.pc sim`: corre carreras automáticas en las 3 pistas con los 3 modos y muestra tiempos de vuelta.
+- `make -f Makefile.pc sim`: corre carreras automáticas en todas las pistas con los 4 modos (`./pc_test police` las corre con persecución) y muestra tiempos de vuelta.
 - `make -f Makefile.pc shots`: genera capturas en `shots/`.
 
 ## Créditos
 
-El trazado de PARQUE TUCAN se tomó de un mapa de © colaboradores de OpenStreetMap (datos bajo licencia ODbL, openstreetmap.org/copyright).
+Los trazados de PARQUE TUCAN y EL SEMINARIO se basan en mapas; el de PARQUE TUCAN se tomó de un mapa de © colaboradores de OpenStreetMap (datos bajo licencia ODbL, openstreetmap.org/copyright).

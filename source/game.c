@@ -8,10 +8,10 @@
 #include "race.h"
 #include "font.h"
 
-enum { GS_TITLE = 0, GS_PLAYERS, GS_MODE, GS_TRACK, GS_CAR, GS_LOADING, GS_RACE, GS_PAUSE, GS_RESULTS };
+enum { GS_TITLE = 0, GS_PLAYERS, GS_MODE, GS_POLICE, GS_TRACK, GS_CAR, GS_LOADING, GS_RACE, GS_PAUSE, GS_RESULTS };
 
 static struct {
-    int st, sel, nplayers, mode, track, cars[2], car_player;
+    int st, sel, nplayers, mode, track, cars[2], car_player, police;
     float t;
     int pause_sel, res_sel;
     int loaded;
@@ -25,6 +25,91 @@ static Race g_race;
 static void *g_car_preview[CAR_COUNT];
 static void *g_ent_gpu[ENT_MAX];
 static void *g_menu_floor;
+static void *g_lightbar[2];   /* torreta de la patrulla: dos fases del destello */
+/* danos (CHOQUES): copia original y deformada de cada auto, restos y ruedas sueltas */
+static int g_dmg_on;
+static Mesh g_ent_orig[ENT_MAX], g_ent_def[ENT_MAX];
+static int g_ent_wf[ENT_MAX][4], g_ent_wc[ENT_MAX][4];
+static void *g_wreck_gpu[WRECK_MAX];
+static void *g_wheel_gpu;
+
+static void mesh_clone(Mesh *dst, const Mesh *src) {
+    mesh_init(dst);
+    mesh_append(dst, src);
+}
+
+static unsigned pos_hash(const MVtx *v) {
+    unsigned h = (unsigned)(int)floorf(v->x * 9.0f) * 73856093u ^ (unsigned)(int)floorf(v->y * 9.0f) * 19349663u ^ (unsigned)(int)floorf(v->z * 9.0f) * 83492791u;
+    return (h >> 7) & 255u;
+}
+
+/* abolla la malla hacia dentro alrededor del punto de impacto y oscurece la pintura;
+   solo depende de la posicion, asi los vertices compartidos se mueven igual y no se abren huecos */
+static void deform_mesh(int i, V3 dir, float amt, int lost) {
+    Mesh *m = &g_ent_def[i];
+    V3 P = v3(dir.x * 1.0f, 0.75f, dir.z * 2.3f);
+    int k, w, skip;
+    for (k = 0; k < m->n; k++) {
+        MVtx *v = &m->v[k];
+        float dx, dy, dz, dist, f, push, hn;
+        skip = 0;
+        for (w = 0; w < 4; w++) if (k >= g_ent_wf[i][w] && k < g_ent_wf[i][w] + g_ent_wc[i][w]) skip = 1;
+        if (skip) continue;
+        dx = v->x - P.x; dy = v->y - P.y; dz = v->z - P.z;
+        dist = sqrtf(dx * dx + dy * dy + dz * dz);
+        f = 1.0f - dist / 1.6f;
+        if (f <= 0) continue;
+        hn = pos_hash(v) / 255.0f;
+        push = amt * 0.55f * f * f * (0.7f + 0.6f * hn);
+        v->x -= dir.x * push;
+        v->z -= dir.z * push;
+        if (v->y > 0.4f) v->y -= amt * 0.22f * f * hn;
+        {
+            float sh = 1.0f - 0.4f * f * amt;
+            v->r = (unsigned char)(v->r * sh); v->g = (unsigned char)(v->g * sh); v->b = (unsigned char)(v->b * sh);
+        }
+    }
+    /* ruedas que salieron volando: se colapsan */
+    for (w = 0; w < 4; w++) {
+        if (!(lost & (1 << w))) continue;
+        for (k = g_ent_wf[i][w]; k < g_ent_wf[i][w] + g_ent_wc[i][w] && k < m->n; k++) {
+            m->v[k].x = m->v[g_ent_wf[i][w]].x; m->v[k].y = m->v[g_ent_wf[i][w]].y; m->v[k].z = m->v[g_ent_wf[i][w]].z;
+        }
+    }
+}
+
+static void process_damage(void) {
+    Race *r = &g_race;
+    int i;
+    if (!g_dmg_on) return;
+    /* restos nuevos: copian la malla deformada antes de que el auto se repare */
+    for (i = 0; i < WRECK_MAX; i++) {
+        Wreck *w = &r->wreck[i];
+        if (!w->mesh_pending) continue;
+        w->mesh_pending = 0;
+        plat_mesh_release(g_wreck_gpu[i]);
+        g_wreck_gpu[i] = g_ent_def[w->src].n ? plat_mesh_upload(&g_ent_def[w->src]) : NULL;
+    }
+    for (i = 0; i < ENT_MAX; i++) {
+        Entity *e = &r->ent[i];
+        int changed = 0;
+        if (!g_ent_orig[i].n) { e->dmg_dirty = e->dmg_reset = 0; continue; }
+        if (e->dmg_reset) {
+            e->dmg_reset = 0;
+            memcpy(g_ent_def[i].v, g_ent_orig[i].v, sizeof(MVtx) * g_ent_orig[i].n);
+            changed = 1;
+        }
+        if (e->dmg_dirty) {
+            e->dmg_dirty = 0;
+            deform_mesh(i, e->dmg_dir, e->dmg_amt, e->wheels_lost);
+            changed = 1;
+        }
+        if (changed) {
+            plat_mesh_release(g_ent_gpu[i]);
+            g_ent_gpu[i] = plat_mesh_upload(&g_ent_def[i]);
+        }
+    }
+}
 
 static const Col WHITE = {255, 255, 255, 255};
 static const Col YELLOW = {255, 220, 50, 255};
@@ -96,8 +181,20 @@ static void unload_race(void) {
     for (i = 0; i < g_track.nchunks; i++) { plat_mesh_release(g_track.chunks[i].gpu); g_track.chunks[i].gpu = NULL; }
     plat_mesh_release(g_track.world_gpu); g_track.world_gpu = NULL;
     for (i = 0; i < ENT_MAX; i++) { plat_mesh_release(g_ent_gpu[i]); g_ent_gpu[i] = NULL; }
+    for (i = 0; i < 2; i++) { plat_mesh_release(g_lightbar[i]); g_lightbar[i] = NULL; }
+    for (i = 0; i < ENT_MAX; i++) { mesh_free(&g_ent_orig[i]); mesh_free(&g_ent_def[i]); }
+    for (i = 0; i < WRECK_MAX; i++) { plat_mesh_release(g_wreck_gpu[i]); g_wreck_gpu[i] = NULL; }
+    plat_mesh_release(g_wheel_gpu); g_wheel_gpu = NULL;
+    g_dmg_on = 0;
     track_free_meshes(&g_track);
     G.loaded = 0;
+}
+
+static void restart_race(void) {
+    int i;
+    race_setup(&g_race, &g_track, (PhysMode)G.mode, G.nplayers, G.cars, G.police);
+    for (i = 0; i < ENT_MAX; i++) g_race.ent[i].dmg_reset = 1;
+    process_damage();
 }
 
 static void load_race(void) {
@@ -110,20 +207,43 @@ static void load_race(void) {
     }
     g_track.world_gpu = plat_mesh_upload(&g_track.world);
     mesh_free(&g_track.world);
-    race_setup(&g_race, &g_track, (PhysMode)G.mode, G.nplayers, G.cars);
+    race_setup(&g_race, &g_track, (PhysMode)G.mode, G.nplayers, G.cars, G.police);
     for (i = 0; i < ENT_MAX; i++) {
         Entity *e = &g_race.ent[i];
         Mesh m;
-        if (!e->active) continue;
+        if (!e->active && !e->is_police) continue;
         if (e->is_traffic) traffic_build_mesh(&m, e->car, e->paint);
         else car_build_mesh(&m, CAR_SPECS[e->car].shape, e->paint, e->accent);
         g_ent_gpu[i] = plat_mesh_upload(&m);
+        if (G.mode == MODE_CHOQUES) {
+            int w;
+            for (w = 0; w < 4; w++) { g_ent_wf[i][w] = g_wheel_first[w]; g_ent_wc[i][w] = g_wheel_count[w]; }
+            mesh_clone(&g_ent_orig[i], &m);
+            mesh_clone(&g_ent_def[i], &m);
+        }
+        mesh_free(&m);
+    }
+    g_dmg_on = (G.mode == MODE_CHOQUES);
+    {
+        Mesh m;
+        wheel_build_mesh(&m);
+        g_wheel_gpu = plat_mesh_upload(&m);
+        mesh_free(&m);
+    }
+    for (i = 0; i < 2; i++) {
+        Mesh m;
+        Col on1 = i ? col(255, 40, 40) : col(90, 20, 20), on2 = i ? col(30, 30, 90) : col(40, 110, 255);
+        mesh_init(&m);
+        mesh_box(&m, v3(-0.62f, 1.37f, 0.10f), v3(-0.02f, 1.55f, 0.40f), on1, on1);
+        mesh_box(&m, v3(0.02f, 1.37f, 0.10f), v3(0.62f, 1.55f, 0.40f), on2, on2);
+        g_lightbar[i] = plat_mesh_upload(&m);
         mesh_free(&m);
     }
     G.loaded = 1;
 }
 
 void game_debug_start_race(int track, int mode, int nplayers, int car0, int car1) {
+    G.police = (mode >= 100); if (mode >= 100) mode -= 100;
     G.track = track; G.mode = mode; G.nplayers = nplayers; G.cars[0] = car0; G.cars[1] = car1;
     load_race();
     G.st = GS_RACE;
@@ -185,6 +305,12 @@ static void draw_minimap(const Track *tr, float cx, float cy, float size, const 
             plat_rect(x - s / 2 - 1, y - s / 2 - 1, s + 2, s + 2, col(0, 0, 0));
             plat_rect(x - s / 2, y - s / 2, s, s, e->paint);
         }
+        for (i = POLICE_BASE; i < ENT_MAX; i++) {
+            const Entity *e = &r->ent[i];
+            float x = cx + (e->pos.x - tr->center.x) * sc, y = cy + (e->pos.z - tr->center.z) * sc;
+            if (!e->active || !e->is_police) continue;
+            plat_rect(x - 3, y - 3, 6, 6, (((int)(r->time * 6)) & 1) ? col(255, 50, 50) : col(60, 120, 255));
+        }
     }
 }
 
@@ -243,16 +369,37 @@ static void draw_hud(const Viewport *vp, int p) {
         plat_rect(x0 + W - 16 - 150, y0 + H - 16 - S * 7 * 1.6f - 14, 150 * rpm, 8, rpm > 0.9f ? col(255, 60, 40) : col(120, 230, 120));
     }
 
-    /* turbo */
-    if (r->mode == MODE_CHOQUES) {
+    /* turbo / nitro */
+    if (r->mode != MODE_SIM) {
         float bw = 180 * (S / 3.0f) + 60;
         float bx = x0 + 16, by = y0 + H - 16 - 18;
-        text_draw(bx, by - S * 7 - 4, "TURBO", S * 0.67f, e->veh.boosting ? ORANGE : WHITE);
+        text_draw(bx, by - S * 7 - 4, r->mode == MODE_CALLE ? "NITRO" : "TURBO", S * 0.67f, e->veh.boosting ? ORANGE : WHITE);
         plat_rect(bx, by, bw, 14, cola(0, 0, 0, 150));
         plat_rect(bx + 2, by + 2, (bw - 4) * e->veh.boost, 10, e->veh.boosting ? ORANGE : col(70, 170, 255));
+        if (r->mode == MODE_CALLE && G.nplayers == 1) {
+            float sy = by - S * 7 - 30;
+            text_draw(bx, sy - S * 7 * 0.67f - 4, "CAMARA LENTA (Y)", S * 0.5f, v->slowing ? col(255, 230, 90) : GREY);
+            plat_rect(bx, sy, bw, 10, cola(0, 0, 0, 150));
+            plat_rect(bx + 2, sy + 2, (bw - 4) * v->slow, 6, col(255, 220, 60));
+        }
+    }
+    /* persecucion: nivel de busqueda y medidor de detencion */
+    if (r->police && r->state != RS_COUNTDOWN) {
+        int k2;
+        float sx = x0 + W / 2 - 70;
+        text_draw(sx - 6, y0 + 12, "BUSQUEDA", S * 0.5f, col(255, 90, 90));
+        for (k2 = 0; k2 < 5; k2++) {
+            Col c = k2 < r->heat ? ((((int)(r->time * 4)) & 1) ? col(255, 60, 60) : col(80, 140, 255)) : cola(0, 0, 0, 120);
+            plat_rect(sx + 84 + k2 * 14, y0 + 13, 10, 10, c);
+        }
+        if (v->bust > 0.05f) {
+            text_draw_center(x0 + W / 2, y0 + H * 0.62f, "DETENIENDO...", S * 0.8f, col(255, 70, 70));
+            plat_rect(x0 + W / 2 - 80, y0 + H * 0.62f + S * 8, 160, 10, cola(0, 0, 0, 150));
+            plat_rect(x0 + W / 2 - 78, y0 + H * 0.62f + S * 8 + 2, 156 * clampf(v->bust / 3.0f, 0, 1), 6, col(255, 60, 60));
+        }
     }
     if (r->mode == MODE_DERRAPE && e->veh.drifting) {
-        text_draw(x0 + 16, y0 + H - 16 - S * 7, "DERRAPE", S * 0.8f, col(255, 120, 220));
+        text_draw(x0 + 16, y0 + H - 16 - 18 - S * 7 * 2.2f, "DERRAPE", S * 0.8f, col(255, 120, 220));
     }
 
     /* cuenta atras */
@@ -322,6 +469,25 @@ static void render_race(void) {
             if (e->invuln > 0 && ((int)(e->invuln * 12) & 1)) continue;
             race_entity_matrix(r, e, m);
             plat_draw(g_ent_gpu[i], m);
+            if (e->is_police || (e->is_player && e->car == CAR_POLICE && !e->crashed))
+                plat_draw(g_lightbar[((int)(r->time * 7.0f)) & 1], m);
+        }
+        for (i = 0; i < WRECK_MAX; i++) {
+            const Wreck *w = &r->wreck[i];
+            M34 m;
+            V3 dv;
+            if (!w->active || !g_wreck_gpu[i]) continue;
+            dv = vsub(w->pos, eye);
+            if (vlen(dv) > 700.0f || vdot(dv, fwd) < -6.0f) continue;
+            race_wreck_matrix(w, m);
+            plat_draw(g_wreck_gpu[i], m);
+        }
+        for (i = 0; i < DEBRIS_MAX; i++) {
+            const Debris *d = &r->debris[i];
+            M34 m;
+            if (!d->active || !g_wheel_gpu) continue;
+            race_debris_matrix(d, m);
+            plat_draw(g_wheel_gpu, m);
         }
     }
     plat_2d_begin();
@@ -356,7 +522,8 @@ static void render_results(void) {
 
 static void engine_audio(const PadIn pads[2]) {
     int i;
-    if (G.st != GS_RACE) { plat_engine(0, 0, 0, 0); plat_engine(1, 0, 0, 0); return; }
+    if (G.st != GS_RACE) { plat_engine(0, 0, 0, 0); plat_engine(1, 0, 0, 0); plat_siren(0); return; }
+    plat_siren(g_race.police ? g_race.siren : 0);
     for (i = 0; i < RACERS; i++) {
         Entity *e = &g_race.ent[i];
         if (!e->is_player) continue;
@@ -407,12 +574,30 @@ void game_frame(const PadIn pads[2], float dt) {
         menu_background(G.cars[0], -0.6f);
         plat_2d_begin();
         text_draw_center(SCREEN_W / 2, 50, "FISICA", 4, YELLOW);
-        draw_list(it, MODE_COUNT, G.sel, 110, 40, 3);
-        text_draw_center(SCREEN_W / 2, 250, mode_desc(G.sel), 2, GREY);
+        draw_list(it, MODE_COUNT, G.sel, 105, 36, 3);
+        text_draw_center(SCREEN_W / 2, 265, mode_desc(G.sel), 2, GREY);
         if (n0 & BTN_UP) { G.sel = (G.sel + MODE_COUNT - 1) % MODE_COUNT; plat_sfx(SFX_SELECT); }
         if (n0 & BTN_DOWN) { G.sel = (G.sel + 1) % MODE_COUNT; plat_sfx(SFX_SELECT); }
-        if (pr0 & BTN_A) { G.mode = G.sel; G.st = GS_TRACK; G.sel = G.track; plat_sfx(SFX_SELECT); }
+        if (pr0 & BTN_A) { G.mode = G.sel; G.st = GS_POLICE; G.sel = G.police; plat_sfx(SFX_SELECT); }
         if (pr0 & BTN_B) { G.st = GS_PLAYERS; G.sel = G.nplayers - 1; }
+        break;
+    }
+
+    case GS_POLICE: {
+        const char *it[] = {"SIN POLICIA", "CON PERSECUCION"};
+        menu_background(G.cars[0], -0.6f);
+        plat_2d_begin();
+        text_draw_center(SCREEN_W / 2, 50, "POLICIA", 4, YELLOW);
+        draw_list(it, 2, G.sel, 120, 40, 3);
+        if (G.sel == 1) {
+            text_draw_center(SCREEN_W / 2, 220, "LAS PATRULLAS TE PERSIGUEN Y EMBISTEN", 2, GREY);
+            text_draw_center(SCREEN_W / 2, 244, "SI TE DETIENES CERCA, TE ARRESTAN", 2, GREY);
+            text_draw_center(SCREEN_W / 2, 268, "LA BUSQUEDA SUBE CON EL TIEMPO", 2, GREY);
+            text_draw_center(SCREEN_W / 2, 292, "CUIDADO CON LOS RETENES", 2, GREY);
+        }
+        if (n0 & (BTN_UP | BTN_DOWN)) { G.sel ^= 1; plat_sfx(SFX_SELECT); }
+        if (pr0 & BTN_A) { G.police = G.sel; G.st = GS_TRACK; G.sel = G.track; plat_sfx(SFX_SELECT); }
+        if (pr0 & BTN_B) { G.st = GS_MODE; G.sel = G.mode; }
         break;
     }
 
@@ -441,7 +626,7 @@ void game_frame(const PadIn pads[2], float dt) {
         if (n0 & BTN_UP) { G.sel = (G.sel + TRACK_COUNT - 1) % TRACK_COUNT; plat_sfx(SFX_SELECT); }
         if (n0 & BTN_DOWN) { G.sel = (G.sel + 1) % TRACK_COUNT; plat_sfx(SFX_SELECT); }
         if (pr0 & BTN_A) { G.track = G.sel; G.st = GS_CAR; G.car_player = 0; G.sel = G.cars[0]; plat_sfx(SFX_SELECT); }
-        if (pr0 & BTN_B) { G.st = GS_MODE; G.sel = G.mode; }
+        if (pr0 & BTN_B) { G.st = GS_POLICE; G.sel = G.police; }
         break;
     }
 
@@ -491,7 +676,7 @@ void game_frame(const PadIn pads[2], float dt) {
     }
 
     case GS_RACE:
-        race_update(&g_race, pads, dt);
+        race_update(&g_race, pads, dt); process_damage();
         render_race();
         if (g_race.state == RS_FINISHED && g_race.finish_wait > 3.5f) { G.st = GS_RESULTS; G.res_sel = 0; }
         if ((pads[0].pressed | pads[1].pressed) & BTN_START) { G.st = GS_PAUSE; G.pause_sel = 0; plat_sfx(SFX_SELECT); }
@@ -511,19 +696,19 @@ void game_frame(const PadIn pads[2], float dt) {
         if (pr0 & BTN_START) G.st = GS_RACE;
         if (pr0 & BTN_A) {
             if (G.pause_sel == 0) G.st = GS_RACE;
-            else if (G.pause_sel == 1) { race_setup(&g_race, &g_track, (PhysMode)G.mode, G.nplayers, G.cars); G.st = GS_RACE; }
+            else if (G.pause_sel == 1) { restart_race(); G.st = GS_RACE; }
             else { unload_race(); G.st = GS_TITLE; }
         }
         break;
     }
 
     case GS_RESULTS: {
-        race_update(&g_race, pads, dt);  /* la IA y el piloto automatico siguen */
+        race_update(&g_race, pads, dt);  /* la IA y el piloto automatico siguen */ process_damage();
         render_race();
         render_results();
         if (n0 & (BTN_UP | BTN_DOWN)) G.res_sel ^= 1;
         if (pr0 & BTN_A) {
-            if (G.res_sel == 0) { race_setup(&g_race, &g_track, (PhysMode)G.mode, G.nplayers, G.cars); G.st = GS_RACE; }
+            if (G.res_sel == 0) { restart_race(); G.st = GS_RACE; }
             else { unload_race(); G.st = GS_TITLE; }
         }
         break;
@@ -537,3 +722,20 @@ void game_frame(const PadIn pads[2], float dt) {
 
 /* acceso para las pruebas en PC */
 Race *pc_race(void) { return &g_race; }
+
+#ifndef GEKKO
+/* solo pruebas en PC: muestra en el menu un auto abollado de frente y sin una rueda */
+void game_debug_damage_preview(int car) {
+    Mesh m;
+    int w;
+    car_build_mesh(&m, CAR_SPECS[car].shape, CAR_SPECS[car].paint, CAR_SPECS[car].accent);
+    for (w = 0; w < 4; w++) { g_ent_wf[0][w] = g_wheel_first[w]; g_ent_wc[0][w] = g_wheel_count[w]; }
+    mesh_clone(&g_ent_def[0], &m);
+    deform_mesh(0, vnorm(v3(-0.5f, 0, -1.0f)), 1.0f, 1);
+    deform_mesh(0, v3(1, 0, 0), 0.4f, 1);
+    plat_mesh_release(g_car_preview[car]);
+    g_car_preview[car] = plat_mesh_upload(&g_ent_def[0]);
+    mesh_free(&g_ent_def[0]);
+    mesh_free(&m);
+}
+#endif
