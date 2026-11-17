@@ -4,8 +4,8 @@
 
 #include "core.h"
 
-#define CAR_COUNT 9
-#define CAR_POLICE 8   /* la patrulla: jugable y usada por la policia */
+#define CAR_COUNT 18
+#define CAR_POLICE 17  /* la patrulla (siempre la ultima): jugable y usada por la policia */
 
 typedef struct {
     const char *name;
@@ -35,6 +35,9 @@ extern const Col CAR_ALT_PAINTS[6];
 void car_build_mesh(Mesh *m, int shape, Col paint, Col accent);
 /* auto de trafico (sedan o furgoneta) */
 void traffic_build_mesh(Mesh *m, int kind, Col paint);
+/* ficha del garage: motor, dos lineas de historia y quien lo dibujo */
+typedef struct { const char *motor, *line1, *line2, *credit; } CarInfo;
+extern const CarInfo CAR_INFO[CAR_COUNT];
 /* rango de vertices de cada rueda de la ultima malla generada (orden: del-izq, del-der, tras-izq, tras-der) */
 extern int g_wheel_first[4], g_wheel_count[4];
 /* una rueda suelta centrada en el origen (para las que salen volando) */

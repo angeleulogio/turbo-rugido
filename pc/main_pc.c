@@ -97,14 +97,14 @@ int main(int argc, char **argv) {
         sim_test(4, 0, 5); sim_test(6, 2, 5); sim_test(7, 1, 5); sim_test(21, 0, 0); sim_test(21, 1, 7); sim_test(21, 2, 4); sim_test(22, 0, 0); sim_test(22, 1, 7); sim_test(22, 2, 4);
         return 0;
     }
-    if (argc > 1 && strcmp(argv[1], "uno") == 0) { sim_test(atoi(argv[2]), atoi(argv[3]), 0); return 0; }
+    if (argc > 1 && strcmp(argv[1], "uno") == 0) { sim_test(atoi(argv[2]), atoi(argv[3]), argc > 4 ? atoi(argv[4]) : 0); return 0; }
     if (argc > 1 && strcmp(argv[1], "police") == 0) {
         for (t = 0; t < TRACK_COUNT; t += 3)
             for (m = 0; m < MODE_COUNT; m++) sim_test(t, 100 + m, m == 2 ? 1 : 0);
         return 0;
     }
     if (argc > 2 && strcmp(argv[1], "recorrido") == 0) {
-        int tk = atoi(argv[2]), f, q = 0;
+        int tk = atoi(argv[2]), f, q = 0, every = argc > 3 ? atoi(argv[3]) : 8, from = argc > 4 ? atoi(argv[4]) : 4;
         extern Race *pc_race(void);
         game_init();
         game_debug_start_race(tk, 0, 1, 1, 2);
@@ -118,8 +118,25 @@ int main(int argc, char **argv) {
                 p[0].sx = in.steer; p[0].trig_r = in.throttle; p[0].trig_l = in.brake;
             }
             game_frame(p, 1.0f / 60.0f);
-            if (f > 240 && f % (60 * 8) == 0) { char nm[64]; snprintf(nm, sizeof(nm), "r%02d_%02d", tk, q++); shot(nm); }
+            if (f > 60 * from && f % (60 * every) == 0) { char nm[64]; snprintf(nm, sizeof(nm), "r%02d_%02d", tk, q++); shot(nm); }
         }
+        return 0;
+    }
+    if (argc > 1 && strcmp(argv[1], "garage") == 0) {
+        int q;
+        game_init();
+        game_frame(none, 1.0f / 60.0f);
+        press(0, 10); shot("g00_titulo");
+        press(BTN_DOWN, 2); press(BTN_A, 30);
+        for (q = 0; q < 8; q++) press(BTN_RIGHT, 2);
+        for (q = 8; q < CAR_COUNT; q++) {
+            char nm[32];
+            press(0, 75);
+            snprintf(nm, sizeof(nm), "g%02d_garage", q);
+            shot(nm);
+            press(BTN_RIGHT, 2);
+        }
+        press(BTN_X, 30); shot("g20_pintura");
         return 0;
     }
     if (argc > 1 && strcmp(argv[1], "fotos_choques") == 0) {
