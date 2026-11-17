@@ -4,8 +4,8 @@
 
 #include "core.h"
 
-#define CAR_COUNT 18
-#define CAR_POLICE 17  /* la patrulla (siempre la ultima): jugable y usada por la policia */
+#define CAR_COUNT 19
+#define CAR_POLICE 18  /* la patrulla (siempre la ultima): jugable y usada por la policia */
 
 typedef struct {
     const char *name;

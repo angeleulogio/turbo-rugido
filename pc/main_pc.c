@@ -122,6 +122,18 @@ int main(int argc, char **argv) {
         }
         return 0;
     }
+    if (argc > 7 && strcmp(argv[1], "camara") == 0) {
+        /* camara libre: pista ex ey ez tx tz (alturas fijas) */
+        extern int g_dbg_cam; extern V3 g_dbg_eye, g_dbg_tgt;
+        game_init();
+        game_debug_start_race(atoi(argv[2]), 0, 1, 1, 2);
+        g_dbg_cam = 1;
+        g_dbg_eye = v3(atof(argv[3]), atof(argv[4]), atof(argv[5]));
+        g_dbg_tgt = v3(atof(argv[6]), 0, atof(argv[7]));
+        press(0, 3);
+        shot(argc > 8 ? argv[8] : "camara");
+        return 0;
+    }
     if (argc > 1 && strcmp(argv[1], "garage") == 0) {
         int q;
         game_init();

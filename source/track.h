@@ -8,7 +8,7 @@
 #define TRACK_MAX_CHUNKS 64
 #define TRACK_SPACING   3.0f
 
-enum { TRACK_OCHO = 0, TRACK_FORTALEZA, TRACK_VALLE, TRACK_BURGOS, TRACK_FUJI, TRACK_CASTELLOLI, TRACK_OVALO, TRACK_COSTA, TRACK_TUCAN, TRACK_SONORA, TRACK_MAYA, TRACK_VOLCANES, TRACK_AGAVE, TRACK_BAJA, TRACK_CUMBRES, TRACK_FUNDIDORA, TRACK_VILLA, TRACK_AZTLAN, TRACK_SEMINARIO, TRACK_ISLA, TRACK_ESPINAZO, TRACK_GRANJA, TRACK_BOSQUE, TRACK_SANTIAGO, TRACK_PESCADORES, TRACK_COUNT };
+enum { TRACK_OCHO = 0, TRACK_FORTALEZA, TRACK_VALLE, TRACK_BURGOS, TRACK_FUJI, TRACK_CASTELLOLI, TRACK_OVALO, TRACK_COSTA, TRACK_TUCAN, TRACK_SONORA, TRACK_MAYA, TRACK_VOLCANES, TRACK_AGAVE, TRACK_BAJA, TRACK_CUMBRES, TRACK_FUNDIDORA, TRACK_VILLA, TRACK_AZTLAN, TRACK_SEMINARIO, TRACK_ISLA, TRACK_ESPINAZO, TRACK_GRANJA, TRACK_BOSQUE, TRACK_SANTIAGO, TRACK_PESCADORES, TRACK_PARQUELAGO, TRACK_RIOSILLA, TRACK_PLUTARCO, TRACK_CANTERA, TRACK_AGUSTIN, TRACK_JABALI, TRACK_LAGOFUND, TRACK_COUNT };
 
 typedef struct {
     V3 c;          /* centro */
@@ -29,6 +29,7 @@ typedef struct {
     V3 t[TRACK_MAX_PTS];         /* tangente (3D) */
     V3 r[TRACK_MAX_PTS];         /* derecha (horizontal) */
     float curv[TRACK_MAX_PTS];   /* curvatura con signo (rad/m), + = gira a la derecha */
+    float bank[TRACK_MAX_PTS];   /* peralte: subida lateral por metro hacia la derecha (0 = plano) */
     unsigned char tunnel[TRACK_MAX_PTS];
     unsigned char bridge[TRACK_MAX_PTS];
     V3 center;                   /* centro aproximado del circuito */
@@ -48,7 +49,8 @@ typedef struct {
     int idx;      /* segmento */
     float s;      /* distancia recorrida desde la meta */
     float d;      /* desplazamiento lateral (+ = derecha) */
-    float h;      /* altura del asfalto */
+    float h;      /* altura del asfalto (ya con el peralte) */
+    float bank;   /* peralte en ese punto */
     V3 tan;       /* tangente interpolada */
     V3 right;
 } TrackPos;
@@ -61,6 +63,7 @@ TrackPos track_locate(const Track *tr, V3 pos, int hint);  /* hint < 0 => busque
 V3 track_point(const Track *tr, float s, float d);         /* posicion en el mundo */
 V3 track_tangent(const Track *tr, float s);
 float track_wrap_s(const Track *tr, float s);
+float track_bank(const Track *tr, float s);      /* peralte (pendiente lateral) en s */
 float track_heading(V3 tan);                   /* yaw de una direccion */
 
 #endif

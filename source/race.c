@@ -1107,6 +1107,16 @@ void race_entity_matrix(const Race *r, const Entity *e, M34 out) {
     V3 rt = v3(cosf(e->yaw), 0, sinf(e->yaw));
     V3 up = vcross(rt, f);
     m34_from_basis(out, rt, up, vscale(f, -1), e->pos);
+    {   /* peralte: el auto se inclina con el camino (segun hacia donde mire) */
+        float b = track_bank(r->track, e->s);
+        if (fabsf(b) > 1e-4f && !e->crashed) {
+            V3 tan = track_tangent(r->track, e->s);
+            float dir = f.x * tan.x + f.z * tan.z;
+            M34 rz;
+            m34_rot_z(rz, atanf(b) * clampf(dir, -1, 1));
+            m34_mul(out, out, rz);
+        }
+    }
     if (e->crashed) {
         M34 rx, ry, rz, t;
         m34_rot_x(rx, e->crash_rot.x);

@@ -26,6 +26,10 @@ static Track g_preview[TRACK_COUNT];  /* trazados para el minimapa */
 static Race g_race;
 static void *g_car_preview[CAR_COUNT];
 static void *g_ent_gpu[ENT_MAX];
+#ifndef GEKKO
+int g_dbg_cam;
+V3 g_dbg_eye, g_dbg_tgt;
+#endif
 static void *g_menu_floor;
 static void *g_garage_mesh;   /* auto del garage con la pintura elegida */
 static void *g_lightbar[2];   /* torreta de la patrulla: dos fases del destello */
@@ -453,6 +457,12 @@ static void render_race(void) {
         V3 eye = r->view[p].eye, fwd = vnorm(vsub(r->view[p].target, r->view[p].eye));
         plat_sky(&vps[p], tr->sky_top, tr->sky_horizon);
         race_camera(r, p, view, &fov);
+#ifndef GEKKO
+        if (g_dbg_cam) {   /* solo pruebas en PC: camara libre para revisar el escenario */
+            eye = g_dbg_eye; fwd = vnorm(vsub(g_dbg_tgt, g_dbg_eye));
+            m34_lookat(view, g_dbg_eye, v3(0, 1, 0), g_dbg_tgt);
+        }
+#endif
         if (np > 1) fov *= 0.72f;
         plat_view_begin(&vps[p], fov, 0.5f, tr->zfar, view, tr->fog, tr->fog_start, tr->fog_end);
         plat_draw(tr->world_gpu, NULL);

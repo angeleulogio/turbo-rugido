@@ -26,6 +26,8 @@ const CarSpec CAR_SPECS[CAR_COUNT] = {
     {"SIRIO GT", "COUPE DE RESISTENCIA", 0.86f, 0.80f, 0.84f, 71.5f, 9.9f, 1.07f, 1.02f, 1100, 280000, 1.11f, 0, 0.45f, 15, {190, 194, 200, 255}, {200, 30, 36, 255}},
     {"SVSR5", "DEPORTIVO DE LOS 50", 0.70f, 0.92f, 0.76f, 66.5f, 10.8f, 1.04f, 1.10f, 1150, 230000, 1.07f, 0, 0.52f, 16, {80, 190, 180, 255}, {240, 235, 215, 255}},
     {"BELFI V8 69", "MUSCLE CAR DE 1969", 0.72f, 0.95f, 0.40f, 67.5f, 11.0f, 0.94f, 1.20f, 1500, 300000, 1.03f, 0, 0.56f, 17, {30, 40, 110, 255}, {240, 240, 244, 255}},
+    /* el carrito de juguete del jugador */
+    {"CARRITO", "EL COCHECITO DE JUGUETE", 0.74f, 0.76f, 0.80f, 67.0f, 9.6f, 1.06f, 1.08f, 1250, 210000, 1.08f, 1, 0.60f, 18, {206, 26, 30, 255}, {24, 24, 26, 255}},
     /* la patrulla de las persecuciones: pesada y estable, con torreta */
     {"PATRULLA", "INTERCEPTOR DE LA POLICIA", 0.86f, 0.80f, 0.72f, 72.0f, 10.0f, 1.04f, 0.98f, 1520, 290000, 1.10f, 0, 0.52f, 8, {24, 24, 30, 255}, {245, 245, 250, 255}},
 };
@@ -49,6 +51,7 @@ const CarInfo CAR_INFO[CAR_COUNT] = {
     {"V8 CENTRAL", "COUPE BAJO PARA CARRERAS DE 24 HORAS.", "FAROS REDONDOS Y TECHO QUE CAE A LA COLA.", "SILUETA DEL HERMANO, DIBUJO DEL JUGADOR"},
     {"V6", "DEPORTIVO DE LOS 50 CON TECHO REDONDO.", "PARACHOQUES CROMADOS Y PINTURA DE DOS TONOS.", "SILUETA DEL HERMANO, DIBUJO DEL JUGADOR"},
     {"V8", "MUSCLE CAR FASTBACK CON COLA LEVANTADA.", "ACELERA FUERTE, PERO CUESTA EN LAS CURVAS.", "SILUETA DEL HERMANO, DIBUJO DEL JUGADOR"},
+    {"V6", "EL CARRITO DE JUGUETE DEL ESCRITORIO.", "ROJO, FALDONES NEGROS Y FILETES BLANCOS.", "COPIADO DEL CARRITO DEL JUGADOR"},
     {"V8 POLICIA", "INTERCEPTOR CON DEFENSA DE EMPUJE.", "EL MISMO AUTO QUE TE PERSIGUE.", "DISENO ORIGINAL DEL JUEGO"},
 };
 
@@ -442,6 +445,33 @@ void car_build_mesh(Mesh *m, int shape, Col paint, Col accent) {
         mesh_box(m, v3(-0.94f, 0.26f, -2.52f), v3(0.94f, 0.34f, -2.40f), col(210, 212, 218), col(210, 212, 218));
         wheel(m, -0.90f, -1.55f, 0.36f, 0.30f); wheel(m, 0.90f, -1.55f, 0.36f, 0.30f);
         wheel(m, -0.92f, 1.45f, 0.37f, 0.36f); wheel(m, 0.92f, 1.45f, 0.37f, 0.36f);
+        break;
+    }
+    case 18: { /* CARRITO: el coche de juguete del jugador, sedan redondeado de los 90 en dos tonos */
+        Sec s[] = {{-2.25f, 0.86f, 0.22f, 0.46f, 0.58f}, {-1.55f, 0.95f, 0.20f, 0.60f, 0.78f}, {0.00f, 0.96f, 0.20f, 0.68f, 0.88f},
+                   {1.55f, 0.95f, 0.22f, 0.70f, 0.90f}, {2.20f, 0.88f, 0.28f, 0.66f, 0.82f}};
+        Col white = col(245, 245, 240), lamp = col(40, 40, 46);
+        int side;
+        body(m, s, 5, paint, dark);
+        cabin(m, -0.75f, 1.30f, 0.86f, 1.32f, 0.80f, 0.62f, 0.80f, 0.85f, paint, glass);
+        for (side = -1; side <= 1; side += 2) {
+            /* pilar central de las 4 puertas */
+            mesh_quad_flat(m, v3(side * 0.825f, 0.88f, 0.15f), v3(side * 0.825f, 0.88f, 0.25f), v3(side * 0.625f, 1.32f, 0.25f), v3(side * 0.625f, 1.32f, 0.15f), paint);
+            /* faldon negro de punta a punta y filete blanco encima */
+            mesh_box(m, v3(side > 0 ? 0.93f : -0.985f, 0.20f, -2.10f), v3(side > 0 ? 0.985f : -0.93f, 0.40f, 2.05f), accent, accent);
+            mesh_quad_flat(m, v3(side * 0.99f, 0.41f, -2.05f), v3(side * 0.99f, 0.41f, 2.00f), v3(side * 0.99f, 0.44f, 2.00f), v3(side * 0.99f, 0.44f, -2.05f), white);
+            /* faros rectangulares hundidos en el cofre, con borde blanco */
+            mesh_quad_flat(m, v3(side * 0.30f, 0.715f, -1.88f), v3(side * 0.68f, 0.715f, -1.88f), v3(side * 0.68f, 0.765f, -1.48f), v3(side * 0.30f, 0.765f, -1.48f), white);
+            mesh_quad_flat(m, v3(side * 0.34f, 0.72f, -1.84f), v3(side * 0.64f, 0.72f, -1.84f), v3(side * 0.64f, 0.77f, -1.52f), v3(side * 0.34f, 0.77f, -1.52f), lamp);
+        }
+        /* defensas negras y filete blanco al frente */
+        mesh_box(m, v3(-0.90f, 0.20f, -2.34f), v3(0.90f, 0.38f, -2.10f), accent, accent);
+        mesh_box(m, v3(-0.88f, 0.24f, 2.05f), v3(0.88f, 0.44f, 2.28f), accent, accent);
+        mesh_quad_flat(m, v3(-0.80f, 0.40f, -2.27f), v3(0.80f, 0.40f, -2.27f), v3(0.80f, 0.43f, -2.27f), v3(-0.80f, 0.43f, -2.27f), white);
+        mesh_quad_flat(m, v3(-0.80f, 0.56f, 2.205f), v3(-0.40f, 0.56f, 2.205f), v3(-0.40f, 0.66f, 2.205f), v3(-0.80f, 0.66f, 2.205f), col(220, 30, 30));
+        mesh_quad_flat(m, v3(0.40f, 0.56f, 2.205f), v3(0.80f, 0.56f, 2.205f), v3(0.80f, 0.66f, 2.205f), v3(0.40f, 0.66f, 2.205f), col(220, 30, 30));
+        wheel(m, -0.86f, -1.42f, 0.34f, 0.26f); wheel(m, 0.86f, -1.42f, 0.34f, 0.26f);
+        wheel(m, -0.86f, 1.38f, 0.34f, 0.26f); wheel(m, 0.86f, 1.38f, 0.34f, 0.26f);
         break;
     }
     case 4: { /* sedan deportivo de 4 puertas (dibujo del hermano) */
