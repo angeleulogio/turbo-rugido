@@ -97,7 +97,7 @@ typedef struct {
     int nplayers;
     int ntraffic;
     Entity ent[ENT_MAX];
-    PlayerView view[2];
+    PlayerView view[MAX_PLAYERS];
     int state;
     float countdown;
     float time;
@@ -118,8 +118,8 @@ typedef struct {
     Debris debris[DEBRIS_MAX];
 } Race;
 
-void race_setup(Race *r, Track *tr, PhysMode mode, int nplayers, const int cars[2], int police);
-void race_update(Race *r, const PadIn pads[2], float dt);
+void race_setup(Race *r, Track *tr, PhysMode mode, int nplayers, const int cars[MAX_PLAYERS], int police);
+void race_update(Race *r, const PadIn pads[MAX_PLAYERS], float dt);
 void race_camera(Race *r, int p, M34 view, float *fov);
 void race_entity_matrix(const Race *r, const Entity *e, M34 out);
 void race_wreck_matrix(const Wreck *w, M34 out);

@@ -58,7 +58,13 @@ static void compute_limits(Race *r) {
     }
 }
 
-void race_setup(Race *r, Track *tr, PhysMode mode, int nplayers, const int cars[2], int police) {
+static int es_auto_de_jugador(const int cars[MAX_PLAYERS], int nplayers, int c) {
+    int k;
+    for (k = 0; k < nplayers; k++) if (cars[k] == c) return 1;
+    return 0;
+}
+
+void race_setup(Race *r, Track *tr, PhysMode mode, int nplayers, const int cars[MAX_PLAYERS], int police) {
     int i, slot = 0, ai_car = 0;
     int grid_entity[RACERS];
     memset(r, 0, sizeof(Race));
@@ -89,15 +95,17 @@ void race_setup(Race *r, Track *tr, PhysMode mode, int nplayers, const int cars[
                 e->car = ai_car % (CAR_COUNT - 1);   /* la patrulla no corre como rival */
                 ai_car++;
                 tries++;
-            } while (tries < CAR_COUNT - 1 && (e->car == cars[0] || (nplayers > 1 && e->car == cars[1])));
+            } while (tries < CAR_COUNT - 1 && es_auto_de_jugador(cars, nplayers, e->car));
             e->skill = 0.91f + 0.025f * i;
         }
         e->paint = CAR_SPECS[e->car].paint;
         e->accent = CAR_SPECS[e->car].accent;
-        if (!is_p && (e->car == cars[0] || (nplayers > 1 && e->car == cars[1])))
+        if (!is_p && es_auto_de_jugador(cars, nplayers, e->car))
             e->paint = CAR_ALT_PAINTS[i % 6];
-        if (is_p && nplayers > 1 && e->player == 1 && cars[1] == cars[0])
-            e->paint = CAR_ALT_PAINTS[1];
+        if (is_p && e->player > 0) {   /* si otro jugador ya tiene ese auto, cambia el color */
+            int k;
+            for (k = 0; k < e->player; k++) if (cars[k] == cars[e->player]) e->paint = CAR_ALT_PAINTS[e->player % 6];
+        }
 
         if (is_p) {
             veh_init(&e->veh, &CAR_SPECS[e->car], tr, s, d);
@@ -1136,7 +1144,7 @@ void race_entity_matrix(const Race *r, const Entity *e, M34 out) {
 
 /* ---------------------------------------------------------------- */
 
-void race_update(Race *r, const PadIn pads[2], float dt) {
+void race_update(Race *r, const PadIn pads[MAX_PLAYERS], float dt) {
     int i, p, steps, k;
     float sim_dt, h;
 

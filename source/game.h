@@ -5,7 +5,7 @@
 #include "plat.h"
 
 void game_init(void);
-void game_frame(const PadIn pads[2], float dt);   /* actualiza y dibuja un cuadro */
+void game_frame(const PadIn pads[MAX_PLAYERS], float dt);   /* actualiza y dibuja un cuadro */
 int game_wants_exit(void);
 
 /* para pruebas en PC */

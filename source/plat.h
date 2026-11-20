@@ -7,6 +7,8 @@
 #define SCREEN_W 640
 #define SCREEN_H 480
 
+#define MAX_PLAYERS 4   /* los cuatro puertos de control del GameCube */
+
 typedef struct { int x, y, w, h; } Viewport;
 
 /* botones (mismos significados en todas las plataformas) */
@@ -37,7 +39,7 @@ void plat_rect(float x, float y, float w, float h, Col c);
 void plat_2d_end(void);
 
 /* entrada */
-void plat_read_pads(PadIn pads[2]);
+void plat_read_pads(PadIn pads[MAX_PLAYERS]);
 
 /* audio */
 enum { SFX_BEEP = 0, SFX_GO, SFX_CRASH, SFX_BUMP, SFX_BOOST, SFX_SELECT, SFX_COUNT };

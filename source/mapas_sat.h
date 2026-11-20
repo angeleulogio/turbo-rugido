@@ -357,7 +357,7 @@ static const char *const MAPA_PLUTARCO[] = {
 };
 #define MAPA_PLUTARCO_CX 197.9f
 #define MAPA_PLUTARCO_CY 369.0f
-#define MAPA_PLUTARCO_S 1.10f
+#define MAPA_PLUTARCO_S 1.35f
 #define MAPA_PLUTARCO_CELL 5
 
 static const char *const MAPA_CANTERA[] = {

@@ -266,10 +266,10 @@ static unsigned map_buttons(u16 b) {
     return o;
 }
 
-void plat_read_pads(PadIn pads[2]) {
+void plat_read_pads(PadIn pads[MAX_PLAYERS]) {
     u32 conn = PAD_ScanPads();
     int i;
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < MAX_PLAYERS; i++) {
         PadIn *p = &pads[i];
         p->connected = (conn >> i) & 1;
         p->held = map_buttons(PAD_ButtonsHeld(i));
@@ -288,7 +288,7 @@ void plat_read_pads(PadIn pads[2]) {
 #define ENG_SAMPLES 2048
 #define ENG_CYCLES  8
 static s16 *eng_buf;
-static int eng_on[2];
+static int eng_on[MAX_PLAYERS];
 static s16 *sfx_buf[SFX_COUNT];
 static int sfx_len[SFX_COUNT];
 static int sfx_rate[SFX_COUNT];
@@ -401,8 +401,8 @@ void plat_siren(float vol) {
 }
 
 void plat_engine(int player, int on, float rpm01, float load) {
-    int voice = player;  /* voces 0 y 1 */
-    if (!eng_buf || player < 0 || player > 1) return;
+    int voice = player < 2 ? player : 12 + player;   /* voces 0, 1, 14 y 15 (los efectos usan 2..7, la sirena la 10) */
+    if (!eng_buf || player < 0 || player >= MAX_PLAYERS) return;
     if (!on) {
         if (eng_on[player]) { ASND_StopVoice(voice); eng_on[player] = 0; }
         return;
@@ -439,7 +439,7 @@ int main(int argc, char **argv) {
     game_init();
     last = gettime();
     while (1) {
-        PadIn pads[2];
+        PadIn pads[MAX_PLAYERS];
         u64 now;
         float dt;
         plat_read_pads(pads);

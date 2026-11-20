@@ -21,7 +21,7 @@ Todas las pistas, autos, sonidos y textos están generados por código: es un di
 | Palanca / cruceta | Dirección y menús |
 | A o gatillo R (analógico) | Acelerar |
 | B o gatillo L (analógico) | Frenar / marcha atrás |
-| X | Turbo (DERRAPE y CHOQUES) |
+| X | Turbo (DERRAPE y CHOQUES); en el menú de autos, cambiar la pintura |
 | Z | Cambiar cámara (cerca / lejos) |
 | START | Pausa |
 
@@ -85,3 +85,10 @@ Los números están en `source/vehicle.c` y en `CAR_SPECS` (`source/cars.c`). Ah
 ## Créditos
 
 Los trazados de PARQUE TUCAN y EL SEMINARIO se basan en mapas; el de PARQUE TUCAN se tomó de un mapa de © colaboradores de OpenStreetMap (datos bajo licencia ODbL, openstreetmap.org/copyright).
+
+## Cambios recientes
+- En el menú de autos, X cambia la pintura (original o 6 colores), con muestra del color y la vista previa pintada. Cada jugador elige la suya.
+- De 1 a 4 jugadores: con 2 la pantalla se divide arriba y abajo; con 3 o 4 se divide en cuatro (con 3, el cuarto cuadro muestra el mapa con todos los autos). Cada jugador elige su auto y su pintura en orden. Con 3 o 4 jugadores se ve un poco menos lejos para que el juego no se haga lento.
+- Peralte en SUPEROVALO (hasta 18° en las curvas), PARQUE TUCAN, LAGO CANTERA y PARQUE LAGO (unos 6° a 7°). Los tramos peraltados se levantan lo justo para que el borde bajo quede a ras de suelo.
+- PARQUE TUCAN con subidas y bajadas más marcadas (de 1 a 16 m).
+- PLAZA PLUTARCO con camino ancho (19 m) y agrandada a 2 km; PARQUE LAGO con camino ancho (18 m), agrandada a 3.5 km y con subidas y bajadas suaves.

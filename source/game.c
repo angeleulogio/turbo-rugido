@@ -11,20 +11,22 @@
 enum { GS_TITLE = 0, GS_GARAGE, GS_PLAYERS, GS_MODE, GS_POLICE, GS_TRACK, GS_CAR, GS_LOADING, GS_RACE, GS_PAUSE, GS_RESULTS };
 
 static struct {
-    int st, sel, nplayers, mode, track, cars[2], car_player, police;
+    int st, sel, nplayers, mode, track, cars[MAX_PLAYERS], car_player, police;
     int g_car, g_paint, g_built_car, g_built_paint, g_auto;   /* garage */
+    int paint[MAX_PLAYERS];   /* pintura elegida por cada jugador: 0 original, 1..6 colores alternos */
     float g_yaw, g_zoom;
     float t;
     int pause_sel, res_sel;
     int loaded;
-    float nav_cool[2];
-    float prev_sx[2], prev_sy[2];
+    float nav_cool[MAX_PLAYERS];
+    float prev_sx[MAX_PLAYERS], prev_sy[MAX_PLAYERS];
 } G;
 
 static Track g_track;                 /* pista de la carrera */
 static Track g_preview[TRACK_COUNT];  /* trazados para el minimapa */
 static Race g_race;
 static void *g_car_preview[CAR_COUNT];
+static int g_preview_paint[CAR_COUNT];   /* pintura con la que esta hecha cada vista previa */
 static void *g_ent_gpu[ENT_MAX];
 #ifndef GEKKO
 int g_dbg_cam;
@@ -160,6 +162,7 @@ void game_init(void) {
     int i;
     memset(&G, 0, sizeof(G));
     G.nplayers = 1;
+    G.cars[2] = 2; G.cars[3] = 3;
     G.cars[0] = 0; G.cars[1] = 1;
     for (i = 0; i < TRACK_COUNT; i++) track_build_centerline(&g_preview[i], i);
     for (i = 0; i < CAR_COUNT; i++) {
@@ -201,9 +204,12 @@ static int mode_menu_index(int mode) {
     return mode == MODE_CHOQUES ? 1 : 0;
 }
 
+static void apply_player_paints(void);
+
 static void restart_race(void) {
     int i;
     race_setup(&g_race, &g_track, (PhysMode)G.mode, G.nplayers, G.cars, G.police);
+    apply_player_paints();
     for (i = 0; i < ENT_MAX; i++) g_race.ent[i].dmg_reset = 1;
     process_damage();
 }
@@ -219,6 +225,7 @@ static void load_race(void) {
     g_track.world_gpu = plat_mesh_upload(&g_track.world);
     mesh_free(&g_track.world);
     race_setup(&g_race, &g_track, (PhysMode)G.mode, G.nplayers, G.cars, G.police);
+    apply_player_paints();
     for (i = 0; i < ENT_MAX; i++) {
         Entity *e = &g_race.ent[i];
         Mesh m;
@@ -255,7 +262,7 @@ static void load_race(void) {
 
 void game_debug_start_race(int track, int mode, int nplayers, int car0, int car1) {
     G.police = (mode >= 100); if (mode >= 100) mode -= 100;
-    G.track = track; G.mode = mode; G.nplayers = nplayers; G.cars[0] = car0; G.cars[1] = car1;
+    G.track = track; G.mode = mode; G.nplayers = nplayers; G.cars[0] = car0; G.cars[1] = car1; G.cars[2] = 2; G.cars[3] = 3;
     load_race();
     G.st = GS_RACE;
 }
@@ -263,6 +270,30 @@ void game_debug_start_race(int track, int mode, int nplayers, int car0, int car1
 /* ------------------------------------------------------------ */
 /* dibujo de menus                                               */
 /* ------------------------------------------------------------ */
+
+static Col paint_color(int car, int paint) {
+    return paint == 0 ? CAR_SPECS[car].paint : CAR_ALT_PAINTS[paint - 1];
+}
+
+/* rehace la vista previa del menu con la pintura elegida */
+static void preview_paint(int car, int paint) {
+    Mesh m;
+    if (g_preview_paint[car] == paint && g_car_preview[car]) return;
+    car_build_mesh(&m, CAR_SPECS[car].shape, paint_color(car, paint), CAR_SPECS[car].accent);
+    plat_mesh_release(g_car_preview[car]);
+    g_car_preview[car] = plat_mesh_upload(&m);
+    mesh_free(&m);
+    g_preview_paint[car] = paint;
+}
+
+/* aplica a los autos de los jugadores la pintura elegida en el menu */
+static void apply_player_paints(void) {
+    int i;
+    for (i = 0; i < RACERS; i++) {
+        Entity *e = &g_race.ent[i];
+        if (e->is_player && G.paint[e->player] > 0) e->paint = paint_color(e->car, G.paint[e->player]);
+    }
+}
 
 static void menu_background(int car, float ypos) {
     Viewport vp = {0, 0, SCREEN_W, SCREEN_H};
@@ -340,7 +371,7 @@ static void draw_hud(const Viewport *vp, int p) {
     PlayerView *v = &r->view[p];
     Entity *e = NULL;
     int i;
-    float S = (G.nplayers > 1) ? 2.0f : 3.0f;   /* escala de texto */
+    float S = G.nplayers == 1 ? 3.0f : (G.nplayers == 2 ? 2.0f : 1.6f);   /* escala de texto */
     float x0 = vp->x, y0 = vp->y, W = vp->w, H = vp->h;
     char b[48];
     for (i = 0; i < RACERS; i++) if (r->ent[i].is_player && r->ent[i].player == p) e = &r->ent[i];
@@ -444,12 +475,19 @@ static void draw_hud(const Viewport *vp, int p) {
 static void render_race(void) {
     Race *r = &g_race;
     Track *tr = &g_track;
-    Viewport vps[2];
+    Viewport vps[MAX_PLAYERS];
     int p, i, np = G.nplayers;
+    /* con 3 o 4 jugadores la pantalla se divide en cuatro y se ve menos lejos para que no baje la velocidad */
+    float lejos = np >= 3 ? 0.6f : 1.0f;
     if (np == 1) { vps[0].x = 0; vps[0].y = 0; vps[0].w = SCREEN_W; vps[0].h = SCREEN_H; }
-    else {
+    else if (np == 2) {
         vps[0].x = 0; vps[0].y = 0; vps[0].w = SCREEN_W; vps[0].h = SCREEN_H / 2;
         vps[1].x = 0; vps[1].y = SCREEN_H / 2; vps[1].w = SCREEN_W; vps[1].h = SCREEN_H / 2;
+    } else {
+        for (p = 0; p < MAX_PLAYERS; p++) {
+            vps[p].x = (p & 1) * (SCREEN_W / 2); vps[p].y = (p >> 1) * (SCREEN_H / 2);
+            vps[p].w = SCREEN_W / 2; vps[p].h = SCREEN_H / 2;
+        }
     }
     for (p = 0; p < np; p++) {
         M34 view;
@@ -463,15 +501,15 @@ static void render_race(void) {
             m34_lookat(view, g_dbg_eye, v3(0, 1, 0), g_dbg_tgt);
         }
 #endif
-        if (np > 1) fov *= 0.72f;
-        plat_view_begin(&vps[p], fov, 0.5f, tr->zfar, view, tr->fog, tr->fog_start, tr->fog_end);
+        if (np == 2) fov *= 0.72f;
+        plat_view_begin(&vps[p], fov, 0.5f, tr->zfar * lejos, view, tr->fog, tr->fog_start * lejos, tr->fog_end * lejos);
         plat_draw(tr->world_gpu, NULL);
         for (i = 0; i < tr->nchunks; i++) {
             TrackChunk *c = &tr->chunks[i];
             V3 dv = vsub(c->c, eye);
             float dist = vlen(dv);
             if (!c->gpu) continue;
-            if (dist - c->r > fminf(1400.0f, tr->fog_end + 150.0f)) continue;
+            if (dist - c->r > fminf(1400.0f, tr->fog_end * lejos + 150.0f)) continue;
             if (vdot(dv, fwd) < -c->r) continue;
             plat_draw(c->gpu, NULL);
         }
@@ -481,7 +519,7 @@ static void render_race(void) {
             V3 dv;
             if (!e->active || !g_ent_gpu[i]) continue;
             dv = vsub(e->pos, eye);
-            if (vlen(dv) > 700.0f || vdot(dv, fwd) < -6.0f) continue;
+            if (vlen(dv) > 700.0f * lejos || vdot(dv, fwd) < -6.0f) continue;
             /* parpadeo durante la invulnerabilidad */
             if (e->invuln > 0 && ((int)(e->invuln * 12) & 1)) continue;
             race_entity_matrix(r, e, m);
@@ -509,7 +547,13 @@ static void render_race(void) {
     }
     plat_2d_begin();
     for (p = 0; p < np; p++) draw_hud(&vps[p], p);
+    if (np == 3) {   /* el cuarto cuadro muestra el mapa con todos los autos */
+        plat_rect(SCREEN_W / 2, SCREEN_H / 2, SCREEN_W / 2, SCREEN_H / 2, col(16, 20, 30));
+        text_draw_center(SCREEN_W * 3 / 4, SCREEN_H / 2 + 10, tr->name, 2, YELLOW);
+        draw_minimap(tr, SCREEN_W * 3 / 4, SCREEN_H * 3 / 4 + 8, 190, r);
+    }
     if (np > 1) plat_rect(0, SCREEN_H / 2 - 2, SCREEN_W, 4, col(0, 0, 0));
+    if (np > 2) plat_rect(SCREEN_W / 2 - 2, 0, 4, SCREEN_H, col(0, 0, 0));
 }
 
 static void render_results(void) {
@@ -537,9 +581,9 @@ static void render_results(void) {
 
 /* ------------------------------------------------------------ */
 
-static void engine_audio(const PadIn pads[2]) {
+static void engine_audio(const PadIn pads[MAX_PLAYERS]) {
     int i;
-    if (G.st != GS_RACE) { plat_engine(0, 0, 0, 0); plat_engine(1, 0, 0, 0); plat_siren(0); return; }
+    if (G.st != GS_RACE) { for (i = 0; i < MAX_PLAYERS; i++) plat_engine(i, 0, 0, 0); plat_siren(0); return; }
     plat_siren(g_race.police ? g_race.siren : 0);
     for (i = 0; i < RACERS; i++) {
         Entity *e = &g_race.ent[i];
@@ -553,7 +597,7 @@ static void engine_audio(const PadIn pads[2]) {
     }
 }
 
-static PadIn g_pads_last[2];
+static PadIn g_pads_last[MAX_PLAYERS];
 
 /* ------------------------------------------------------------ */
 /* GARAGE: ver cada auto de cerca, con su ficha                  */
@@ -639,8 +683,8 @@ static void garage_screen(unsigned n0, unsigned pr0) {
     text_draw_right(SCREEN_W - 12, 470 - 2, "L/R GIRAR  PALANCA ZOOM  X PINTURA  A AUTO-GIRO  B SALIR", 1, GREY);
 }
 
-void game_frame(const PadIn pads[2], float dt) {
-    g_pads_last[0] = pads[0]; g_pads_last[1] = pads[1];
+void game_frame(const PadIn pads[MAX_PLAYERS], float dt) {
+    memcpy(g_pads_last, pads, sizeof(g_pads_last));
     unsigned n0 = nav(&pads[0], 0);
     unsigned pr0 = pads[0].pressed;
     G.t += dt;
@@ -650,6 +694,7 @@ void game_frame(const PadIn pads[2], float dt) {
     switch (G.st) {
     case GS_TITLE: {
         const char *it[] = {"CARRERA", "GARAGE"};
+        preview_paint(((int)(G.t / 4.0f)) % CAR_COUNT, 0);
         menu_background(((int)(G.t / 4.0f)) % CAR_COUNT, -0.2f);
         plat_2d_begin();
         text_draw_center(SCREEN_W / 2, 70, "TURBO", 8, YELLOW);
@@ -670,13 +715,15 @@ void game_frame(const PadIn pads[2], float dt) {
         break;
 
     case GS_PLAYERS: {
-        const char *it[] = {"1 JUGADOR", "2 JUGADORES"};
+        const char *it[] = {"1 JUGADOR", "2 JUGADORES", "3 JUGADORES", "4 JUGADORES"};
+        static const char *ayuda[] = {"", "PANTALLA DIVIDIDA - CONECTA 2 MANDOS", "PANTALLA EN 4 - CONECTA 3 MANDOS", "PANTALLA EN 4 - CONECTA 4 MANDOS"};
         menu_background(G.cars[0], -0.6f);
         plat_2d_begin();
         text_draw_center(SCREEN_W / 2, 50, "JUGADORES", 4, YELLOW);
-        draw_list(it, 2, G.sel, 120, 40, 3);
-        if (G.sel == 1) text_draw_center(SCREEN_W / 2, 210, "PANTALLA DIVIDIDA - CONECTA 2 MANDOS", 2, GREY);
-        if (n0 & (BTN_UP | BTN_DOWN)) { G.sel ^= 1; plat_sfx(SFX_SELECT); }
+        draw_list(it, 4, G.sel, 110, 36, 3);
+        text_draw_center(SCREEN_W / 2, 270, ayuda[G.sel], 2, GREY);
+        if (n0 & BTN_UP) { G.sel = (G.sel + 3) % 4; plat_sfx(SFX_SELECT); }
+        if (n0 & BTN_DOWN) { G.sel = (G.sel + 1) % 4; plat_sfx(SFX_SELECT); }
         if (pr0 & BTN_A) { G.nplayers = G.sel + 1; G.st = GS_MODE; G.sel = mode_menu_index(G.mode); plat_sfx(SFX_SELECT); }
         if (pr0 & BTN_B) { G.st = GS_TITLE; G.sel = 0; }
         break;
@@ -764,16 +811,27 @@ void game_frame(const PadIn pads[2], float dt) {
         stat_bar(140, 370, "VELOCIDAD", sp->stat_speed);
         stat_bar(140, 395, "ACELERAC.", sp->stat_accel);
         stat_bar(140, 420, "MANEJO", sp->stat_handling);
+        {   /* pintura: X cambia el color, con una muestra */
+            static const char *pn[7] = {"ORIGINAL", "COLOR 1", "COLOR 2", "COLOR 3", "COLOR 4", "COLOR 5", "COLOR 6"};
+            Col pc = paint_color(G.sel, G.paint[cp]);
+            snprintf(b, sizeof(b), "PINTURA: %s", pn[G.paint[cp]]);
+            text_draw_center(SCREEN_W / 2, 140, b, 2, WHITE);
+            plat_rect(SCREEN_W / 2 - 40, 160, 80, 12, cola(0, 0, 0, 160));
+            plat_rect(SCREEN_W / 2 - 38, 162, 76, 8, pc);
+            text_draw_center(SCREEN_W / 2, 452, "X: CAMBIAR PINTURA", 1.5f, GREY);
+            if (pp & BTN_X) { G.paint[cp] = (G.paint[cp] + 1) % 7; plat_sfx(SFX_SELECT); }
+        }
         if (nn & BTN_LEFT) { G.sel = (G.sel + CAR_COUNT - 1) % CAR_COUNT; plat_sfx(SFX_SELECT); }
         if (nn & BTN_RIGHT) { G.sel = (G.sel + 1) % CAR_COUNT; plat_sfx(SFX_SELECT); }
+        preview_paint(G.sel, G.paint[cp]);
         if (pp & BTN_A) {
             G.cars[cp] = G.sel;
             plat_sfx(SFX_SELECT);
-            if (cp == 0 && G.nplayers > 1) { G.car_player = 1; G.sel = G.cars[1]; }
+            if (cp < G.nplayers - 1) { G.car_player = cp + 1; G.sel = G.cars[cp + 1]; }
             else G.st = GS_LOADING;
         }
         if (pp & BTN_B) {
-            if (cp == 1) { G.car_player = 0; G.sel = G.cars[0]; }
+            if (cp > 0) { G.car_player = cp - 1; G.sel = G.cars[cp - 1]; }
             else { G.st = GS_TRACK; G.sel = G.track; }
         }
         break;
@@ -796,12 +854,12 @@ void game_frame(const PadIn pads[2], float dt) {
         race_update(&g_race, pads, dt); process_damage();
         render_race();
         if (g_race.state == RS_FINISHED && g_race.finish_wait > 3.5f) { G.st = GS_RESULTS; G.res_sel = 0; }
-        if ((pads[0].pressed | pads[1].pressed) & BTN_START) { G.st = GS_PAUSE; G.pause_sel = 0; plat_sfx(SFX_SELECT); }
+        if ((pads[0].pressed | pads[1].pressed | pads[2].pressed | pads[3].pressed) & BTN_START) { G.st = GS_PAUSE; G.pause_sel = 0; plat_sfx(SFX_SELECT); }
         break;
 
     case GS_PAUSE: {
         const char *it[] = {"CONTINUAR", "REINICIAR", "SALIR AL MENU"};
-        PadIn none[2];
+        PadIn none[MAX_PLAYERS];
         memset(none, 0, sizeof(none));
         race_update(&g_race, none, 0);  /* congela, pero mantiene camaras */
         render_race();

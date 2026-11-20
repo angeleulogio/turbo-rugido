@@ -148,9 +148,9 @@ void plat_rect(float x, float y, float w, float h, Col c) {
     }
 }
 
-static PadIn script_pads[2];
-void pc_set_pads(const PadIn p[2]) { script_pads[0] = p[0]; script_pads[1] = p[1]; }
-void plat_read_pads(PadIn pads[2]) { pads[0] = script_pads[0]; pads[1] = script_pads[1]; }
+static PadIn script_pads[MAX_PLAYERS];
+void pc_set_pads(const PadIn p[MAX_PLAYERS]) { memcpy(script_pads, p, sizeof(script_pads)); }
+void plat_read_pads(PadIn pads[MAX_PLAYERS]) { int i; for (i = 0; i < MAX_PLAYERS; i++) pads[i] = script_pads[i]; }
 
 void plat_engine(int player, int on, float rpm01, float load) { (void)player; (void)on; (void)rpm01; (void)load; }
 void plat_sfx(int id) { (void)id; }

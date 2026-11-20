@@ -3,9 +3,9 @@
 #include "../source/plat.h"
 #include "../source/game.h"
 #include "../source/race.h"
-void pc_set_pads(const PadIn p[2]); void pc_save_ppm(const char *path); Race *pc_race(void);
+void pc_set_pads(const PadIn p[MAX_PLAYERS]); void pc_save_ppm(const char *path); Race *pc_race(void);
 static void run_until(float s_target, int mode, const char *name, int extra) {
-    PadIn p[2]; int f;
+    PadIn p[MAX_PLAYERS]; int f;
     for (f = 0; f < 60*200; f++) {
         Race *r = pc_race(); Entity *e = &r->ent[RACERS-1];
         memset(p,0,sizeof p);

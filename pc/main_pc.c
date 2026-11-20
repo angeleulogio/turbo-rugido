@@ -8,12 +8,12 @@
 #include "../source/cars.h"
 #include <string.h>
 
-void pc_set_pads(const PadIn p[2]);
+void pc_set_pads(const PadIn p[MAX_PLAYERS]);
 void pc_save_ppm(const char *path);
 extern int pc_tris_drawn;
 
 static void press(unsigned btn, int frames_after) {
-    PadIn p[2];
+    PadIn p[MAX_PLAYERS];
     int i;
     memset(p, 0, sizeof(p));
     p[0].connected = 1;
@@ -30,13 +30,13 @@ static void sim_test(int trk, int mode, int car) {
     if (police) mode -= 100;
     static Track tr;
     static Race r;
-    int cars[2] = {car, 1};
+    int cars[MAX_PLAYERS] = {car, 1, 2, 3};
     int f, laps_done = 0, walls = 0, crashes = 0, nan = 0;
     float lap_t[8] = {0}, last = 0, maxspd = 0;
     track_build(&tr, trk);
     race_setup(&r, &tr, (PhysMode)mode, 1, cars, police);
     for (f = 0; f < 60 * 420; f++) {
-        PadIn p[2];
+        PadIn p[MAX_PLAYERS];
         Entity *pl = &r.ent[RACERS - 1];
         memset(p, 0, sizeof(p));
         if (r.state != RS_COUNTDOWN && !pl->finished) {
@@ -89,7 +89,7 @@ static void shot(const char *name) {
 
 int main(int argc, char **argv) {
     int t, m;
-    PadIn none[2];
+    PadIn none[MAX_PLAYERS];
     memset(none, 0, sizeof(none));
     if (argc > 1 && strcmp(argv[1], "sim") == 0) {
         for (t = 0; t < TRACK_COUNT; t++)
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
         game_init();
         game_debug_start_race(tk, 0, 1, 1, 2);
         for (f = 0; f < 60 * 100; f++) {
-            PadIn p[2];
+            PadIn p[MAX_PLAYERS];
             Race *r = pc_race();
             int k;
             memset(p, 0, sizeof(p));
@@ -132,6 +132,47 @@ int main(int argc, char **argv) {
         g_dbg_tgt = v3(atof(argv[6]), 0, atof(argv[7]));
         press(0, 3);
         shot(argc > 8 ? argv[8] : "camara");
+        return 0;
+    }
+    if (argc > 3 && strcmp(argv[1], "multi") == 0) {
+        /* carrera de varios jugadores: cada mando lo maneja el piloto automatico */
+        int tk = atoi(argv[2]), np = atoi(argv[3]), f, fin = 0;
+        extern Race *pc_race(void);
+        char nm[32];
+        game_init();
+        game_debug_start_race(tk, argc > 4 ? atoi(argv[4]) : 0, np, 4, 9);
+        for (f = 0; f < 60 * 400 && !fin; f++) {
+            PadIn p[MAX_PLAYERS];
+            Race *r = pc_race();
+            int k;
+            memset(p, 0, sizeof(p));
+            for (k = 0; k < RACERS; k++) {
+                Entity *e = &r->ent[k];
+                if (!e->is_player) continue;
+                {
+                    CarInput in = race_autopilot(r, e, 1.0f / 60.0f);
+                    p[e->player].sx = in.steer; p[e->player].trig_r = in.throttle; p[e->player].trig_l = in.brake;
+                    if (e->veh.boost > 0.5f) p[e->player].held |= BTN_X;
+                }
+            }
+            game_frame(p, 1.0f / 60.0f);
+            if (f == 60 * 25) { snprintf(nm, sizeof(nm), "multi%d_%d", np, tk); shot(nm); }
+            if (r->state == RS_FINISHED) fin = 1;
+        }
+        {
+            Race *r = pc_race();
+            int k, n = 0;
+            for (k = 0; k < RACERS; k++) if (r->ent[k].is_player && r->ent[k].finished) n++;
+            printf("pista %d, %d jugadores: terminaron %d, tiempo %.1f s, estado %d\n", tk, np, n, r->time, r->state);
+        }
+        return 0;
+    }
+    if (argc > 1 && strcmp(argv[1], "pintura") == 0) {
+        game_init();
+        game_frame(none, 1.0f / 60.0f);
+        press(BTN_START, 10); press(BTN_A, 10); press(BTN_A, 10); press(BTN_A, 10); press(BTN_A, 10);
+        press(BTN_X, 10); press(BTN_X, 30); shot("m01_pintura");
+        press(BTN_RIGHT, 6); press(BTN_RIGHT, 6); press(BTN_X, 30); shot("m02_pintura");
         return 0;
     }
     if (argc > 1 && strcmp(argv[1], "garage") == 0) {
@@ -164,7 +205,7 @@ int main(int argc, char **argv) {
         press(0, 50); shot("c06_abollado2");
         game_debug_start_race(0, 1, 1, CAR_POLICE, 1);
         for (f = 0; f < 60 * 200 && !(got_crash && got_wreck && got_hit >= 2); f++) {
-            PadIn p[2];
+            PadIn p[MAX_PLAYERS];
             Race *r = pc_race();
             Entity *pl = NULL;
             int k;
@@ -202,7 +243,7 @@ int main(int argc, char **argv) {
             char nm[64];
             game_debug_start_race(tk[q], 100 + md[q], 1, q * 2, 1);
             for (f = 0; f < 60 * (40 + q * 15); f++) {
-                PadIn p[2];
+                PadIn p[MAX_PLAYERS];
                 extern Race *pc_race(void);
                 Race *r = pc_race();
                 int k;
@@ -242,7 +283,7 @@ int main(int argc, char **argv) {
             for (f = 0; f < 60 * 3; f++) game_frame(none, 1.0f / 60.0f);
             if (m == 0) { snprintf(nm, sizeof(nm), "10_t%d_salida", t); shot(nm); }
             for (f = 0; f < 60 * 22 + t * 300; f++) {
-                PadIn p[2];
+                PadIn p[MAX_PLAYERS];
                 extern Race *pc_race(void);
                 memset(p, 0, sizeof(p));
                 {
