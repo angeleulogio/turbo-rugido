@@ -11,7 +11,9 @@
 #define TRAFFIC_MAX 12
 #define POLICE_MAX  4
 #define POLICE_BASE (RACERS + TRAFFIC_MAX)
-#define ENT_MAX     (RACERS + TRAFFIC_MAX + POLICE_MAX)
+#define SUV_MAX     (2 * MAX_PLAYERS)   /* camionetas: maximo 2 por jugador, solo en busqueda 5 */
+#define SUV_BASE    (POLICE_BASE + POLICE_MAX)
+#define ENT_MAX     (RACERS + TRAFFIC_MAX + POLICE_MAX + SUV_MAX)
 #define WRECK_MAX   6     /* restos de autos chocados que quedan en la pista (CHOQUES) */
 #define DEBRIS_MAX  16    /* ruedas volando */
 #define RACE_LAPS   3
@@ -55,6 +57,7 @@ typedef struct {
     int dmg_reset;              /* al reaparecer: volver a la malla original */
     float hit_cd;               /* pausa entre premios por chocar con sus restos */
     int busted;                 /* parado por la policia (no deja restos) */
+    int is_suv, suv_player;     /* camioneta de policia y el jugador al que persigue */
 } Entity;
 
 typedef struct {
@@ -113,6 +116,7 @@ typedef struct {
     float heat_t, roadblock_cd, evade_t;
     float siren;                /* volumen de la sirena para el jugador 1 */
     float timescale;            /* camara lenta del jugador (CALLE) */
+    int suv_aviso;              /* ya se aviso que vienen las camionetas */
     Wreck wreck[WRECK_MAX];
     int wreck_next;
     Debris debris[DEBRIS_MAX];

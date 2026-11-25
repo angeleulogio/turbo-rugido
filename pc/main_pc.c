@@ -26,7 +26,9 @@ static void press(unsigned btn, int frames_after) {
 
 /* simulacion sin graficos: un jugador con piloto automatico */
 static void sim_test(int trk, int mode, int car) {
+    int calor5 = mode >= 200, suv_max = 0, embestidas = 0, suv_prev_cerca[SUV_MAX] = {0};
     int police = mode >= 100, close_f = 0, busts = 0, maxheat = 0, rb = 0, pcrash = 0;
+    if (calor5) mode -= 100;
     if (police) mode -= 100;
     static Track tr;
     static Race r;
@@ -35,6 +37,7 @@ static void sim_test(int trk, int mode, int car) {
     float lap_t[8] = {0}, last = 0, maxspd = 0;
     track_build(&tr, trk);
     race_setup(&r, &tr, (PhysMode)mode, 1, cars, police);
+    if (calor5) r.heat_t = 185.0f;   /* prueba: busqueda 5 desde el inicio */
     for (f = 0; f < 60 * 420; f++) {
         PadIn p[MAX_PLAYERS];
         Entity *pl = &r.ent[RACERS - 1];
@@ -53,6 +56,19 @@ static void sim_test(int trk, int mode, int car) {
             if (pl->crashed && !prev_crash) { crashes++; if (pl->crash_t < 0) busts++; }
             if (r.heat > maxheat) maxheat = r.heat;
             if (r.siren > 0.85f) close_f++;
+            {   /* camionetas activas y golpes contra el jugador */
+                int q, act = 0;
+                for (q = 0; q < SUV_MAX; q++) {
+                    Entity *e = &r.ent[SUV_BASE + q];
+                    int cerca;
+                    if (!e->active) { suv_prev_cerca[q] = 0; continue; }
+                    if (e->suv_player == 0) act++;
+                    cerca = vlen(v3(e->pos.x - pl->pos.x, 0, e->pos.z - pl->pos.z)) < 4.6f;
+                    if (cerca && !suv_prev_cerca[q]) embestidas++;
+                    suv_prev_cerca[q] = cerca;
+                }
+                if (act > suv_max) suv_max = act;
+            }
             { int q; for (q = POLICE_BASE; q < ENT_MAX; q++) { if (r.ent[q].roadblock && r.ent[q].rb_t > 29.98f) rb++; if (r.ent[q].crashed && r.ent[q].crash_t < 0.02f && r.ent[q].crash_t > 0) pcrash++; } }
         }
         if (pl->veh.wall_impact > 3.0f) walls++;
@@ -70,6 +86,7 @@ static void sim_test(int trk, int mode, int car) {
         for (i = 0; i < laps_done && i < 4; i++) printf(" %.1f", lap_t[i]);
         printf(" | pos=%d muros=%d choques=%d vmax=%.0fkmh nan=%d | IA:", r.ent[RACERS - 1].place, walls, crashes, maxspd * 3.6f, nan);
         for (i = 0; i < RACERS - 1; i++) printf(" %d%s", r.ent[i].place, r.ent[i].finished ? "" : "*");
+        if (calor5) printf(" | CAMIONETAS max=%d embestidas=%d", suv_max, embestidas);
         if (police) printf(" | POLICIA calor=%d detenido=%d retenes=%d patrullasfuera=%d cerca=%.0f%%", maxheat, busts, rb, pcrash, 100.0f * close_f / (r.time * 60.0f));
         printf("\n");
     }
@@ -140,7 +157,9 @@ int main(int argc, char **argv) {
         extern Race *pc_race(void);
         char nm[32];
         game_init();
+        int maxp[MAX_PLAYERS] = {0}, cam = argc > 5;
         game_debug_start_race(tk, argc > 4 ? atoi(argv[4]) : 0, np, 4, 9);
+        if (cam) pc_race()->heat_t = 185.0f;   /* prueba: busqueda 5 desde el inicio */
         for (f = 0; f < 60 * 400 && !fin; f++) {
             PadIn p[MAX_PLAYERS];
             Race *r = pc_race();
@@ -156,15 +175,54 @@ int main(int argc, char **argv) {
                 }
             }
             game_frame(p, 1.0f / 60.0f);
-            if (f == 60 * 25) { snprintf(nm, sizeof(nm), "multi%d_%d", np, tk); shot(nm); }
+            {
+                int q, cnt[MAX_PLAYERS] = {0};
+                for (q = 0; q < SUV_MAX; q++) if (r->ent[SUV_BASE + q].active) cnt[r->ent[SUV_BASE + q].suv_player]++;
+                for (q = 0; q < MAX_PLAYERS; q++) if (cnt[q] > maxp[q]) maxp[q] = cnt[q];
+            }
+            if (f == 60 * 25) { snprintf(nm, sizeof(nm), "multi%d_%d%s", np, tk, cam ? "_cam" : ""); shot(nm); }
+            if (cam && f == 60 * 40) { snprintf(nm, sizeof(nm), "multi%d_%d_cam2", np, tk); shot(nm); }
             if (r->state == RS_FINISHED) fin = 1;
         }
         {
             Race *r = pc_race();
             int k, n = 0;
             for (k = 0; k < RACERS; k++) if (r->ent[k].is_player && r->ent[k].finished) n++;
-            printf("pista %d, %d jugadores: terminaron %d, tiempo %.1f s, estado %d\n", tk, np, n, r->time, r->state);
+            printf("pista %d, %d jugadores: terminaron %d, tiempo %.1f s, estado %d", tk, np, n, r->time, r->state);
+            if (cam) printf(" | camionetas maximas por jugador: %d %d %d %d", maxp[0], maxp[1], maxp[2], maxp[3]);
+            printf("\n");
         }
+        return 0;
+    }
+    if (argc > 2 && strcmp(argv[1], "suvfoto") == 0) {
+        int tk = atoi(argv[2]), f, n = 0;
+        extern Race *pc_race(void);
+        game_init();
+        game_debug_start_race(tk, 100, 1, 4, 9);
+        for (f = 0; f < 60 * 240 && n < 3; f++) {
+            PadIn p[MAX_PLAYERS];
+            Race *r = pc_race();
+            Entity *pl = NULL;
+            int k;
+            memset(p, 0, sizeof(p));
+            if (r->heat_t < 185.0f) r->heat_t = 185.0f;
+            for (k = 0; k < RACERS; k++) if (r->ent[k].is_player) pl = &r->ent[k];
+            if (pl && !pl->crashed) {
+                CarInput in = race_autopilot(r, pl, 1.0f / 60.0f);
+                p[0].sx = in.steer; p[0].trig_r = in.throttle; p[0].trig_l = in.brake;
+            }
+            game_frame(p, 1.0f / 60.0f);
+            if (pl && f > 60 * 8 && f % 20 == 0)
+                for (k = 0; k < SUV_MAX; k++) {
+                    Entity *e = &r->ent[SUV_BASE + k];
+                    V3 fw = v3(sinf(pl->yaw), 0, -cosf(pl->yaw)), dv = vsub(e->pos, pl->pos);
+                    float d = vlen(v3(dv.x, 0, dv.z));
+                    if (e->active && !e->crashed && d > 5 && d < 22 && vdot(dv, fw) > 3.0f) {
+                        char nm[32]; snprintf(nm, sizeof(nm), "suv%d_%d", tk, n++); shot(nm); f += 120; break;
+                    }
+                }
+        }
+        printf("capturas: %d\n", n);
         return 0;
     }
     if (argc > 1 && strcmp(argv[1], "pintura") == 0) {

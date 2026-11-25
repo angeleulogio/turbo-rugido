@@ -166,6 +166,19 @@ void race_setup(Race *r, Track *tr, PhysMode mode, int nplayers, const int cars[
             e->pos = track_point(tr, e->s, e->d);
             e->yaw = track_heading(track_tangent(tr, e->s));
         }
+        /* camionetas: 2 por jugador, esperan a la busqueda 5 */
+        for (i = 0; i < SUV_MAX; i++) {
+            Entity *e = &r->ent[SUV_BASE + i];
+            e->is_police = 1;
+            e->is_suv = 1;
+            e->suv_player = i / 2;
+            e->car = CAR_POLICE;
+            e->paint = col(22, 22, 28);
+            e->accent = col(242, 242, 246);
+            e->active = 0;
+            e->rb_t = (i & 1) ? 6.0f : 0.0f;   /* la segunda llega unos segundos despues */
+            e->s = 0; e->d = 0; e->v = 0;
+        }
     }
     for (i = 0; i < 2; i++) {
         int k;
@@ -644,6 +657,56 @@ static void police_update(Race *r, float dt) {
         }
     }
 
+
+    /* camionetas (busqueda 5): cada una persigue a su jugador y lo embiste sin descanso */
+    for (i = 0; i < SUV_MAX; i++) {
+        Entity *e = &r->ent[SUV_BASE + i];
+        Entity *t = NULL;
+        float rel, tv, gap;
+        for (k = 0; k < RACERS; k++) if (r->ent[k].is_player && r->ent[k].player == e->suv_player) t = &r->ent[k];
+        if (!t || t->finished || e->suv_player >= r->nplayers) { e->active = 0; e->skill = 0; continue; }
+        if (r->heat < 5) {   /* si baja la busqueda se retiran */
+            e->active = 0;
+            e->rb_t = (i & 1) ? 6.0f : 0.0f;
+            continue;
+        }
+        if (!e->active) {
+            if (!r->suv_aviso) {
+                for (k = 0; k < r->nplayers; k++) set_msg(r, k, "BUSQUEDA 5: CAMIONETAS!", col(255, 60, 60), 3.0f);
+                r->suv_aviso = 1;
+            }
+            e->rb_t -= dt;
+            if (e->rb_t <= 0 && !t->crashed) police_spawn_behind(r, e, t, 240.0f + (i & 1) * 60.0f);
+            continue;
+        }
+        if (e->crashed) continue;
+        rel = wrap_rel(tr, t->s - e->s);
+        tv = ent_speed(r, t);
+        if (rel > 600.0f || rel < -300.0f) { e->active = 0; e->rb_t = 8.0f; continue; }
+        gap = vlen(v3(e->pos.x - t->pos.x, 0, e->pos.z - t->pos.z));
+        if (e->lane > 0) e->lane -= dt;
+        if (rel > 30.0f) {                      /* alcanzar: mas rapidas que las patrullas */
+            e->skill = fminf(tv + 9.0f + rel * 0.03f, vcap * 1.08f);
+            e->target_d = t->d;
+        } else if (rel > -10.0f) {              /* embestir: por detras o de costado, directo al jugador */
+            if (gap < 4.5f && e->lane <= 0) e->lane = 0.7f;   /* tras el golpe se separa apenas un momento */
+            e->skill = e->lane > 0 ? fmaxf(tv - 2.0f, 0) : fminf(tv + 7.0f, vcap * 1.10f);
+            e->target_d = t->d + ((fabsf(rel) < 4.0f) ? 0.0f : ((i & 1) ? 0.8f : -0.8f));
+        } else {                                /* se le adelanto: frena para cerrarle el paso */
+            e->skill = fmaxf(tv - 9.0f, 0);
+            e->target_d = t->d;
+        }
+        e->target_d = clampf(e->target_d, -(tr->wall - 1.4f), tr->wall - 1.4f);
+        for (k = 0; k < ENT_MAX; k++) {   /* esquiva el trafico, no al jugador ni a la otra camioneta */
+            Entity *o = &r->ent[k];
+            float orel;
+            if (o == e || o == t || !o->active || o->crashed || o->is_suv) continue;
+            orel = wrap_rel(tr, o->s - e->s);
+            if (orel > 0 && orel < 22.0f && fabsf(o->d - e->d) < 3.0f && rel > 30.0f)
+                e->target_d = clampf((o->d > 0) ? o->d - 3.8f : o->d + 3.8f, -(tr->wall - 1.4f), tr->wall - 1.4f);
+        }
+    }
+
     /* retenes desde el nivel 3 */
     if (r->heat >= 3) {
         r->roadblock_cd -= dt;
@@ -689,8 +752,8 @@ static void police_update(Race *r, float dt) {
         float nearest = 1e9f;
         if (!p->is_player || p->crashed || p->finished) continue;
         v = &r->view[p->player];
-        for (k = 0; k < POLICE_MAX; k++) {
-            Entity *e = &r->ent[POLICE_BASE + k];
+        for (k = POLICE_BASE; k < ENT_MAX; k++) {
+            Entity *e = &r->ent[k];
             float d;
             if (!e->active || e->crashed) continue;
             if (fabsf(e->pos.y - p->pos.y) > 3.0f) continue;
@@ -717,6 +780,11 @@ static void police_update(Race *r, float dt) {
                 Entity *e = &r->ent[POLICE_BASE + k];
                 if (e->active) police_spawn_behind(r, e, p, 300.0f + k * 40.0f);
             }
+            for (k = 0; k < SUV_MAX; k++) {   /* las camionetas se retiran */
+                Entity *e = &r->ent[SUV_BASE + k];
+                e->active = 0; e->rb_t = 10.0f + (k & 1) * 6.0f;
+            }
+            r->suv_aviso = 0;
         }
     }
     /* evadido: ninguna patrulla cerca durante un rato */
@@ -760,6 +828,7 @@ static void ent_add(Race *r, Entity *e, V3 dv, V3 push) {
 
 static float ent_mass(const Race *r, const Entity *e) {
     if (e->is_traffic) return 1.5f;
+    if (e->is_suv) return 2.8f;   /* camioneta: mucho mas pesada, empuja fuerte */
     if (e->is_police) return 1.6f;
     if (e->is_player && r->mode == MODE_CHOQUES) return 1.7f;
     return 1.0f;
@@ -918,9 +987,18 @@ static void collisions(Race *r) {
                     dent(r, b, vscale(best_n, -1.0f), closing / 45.0f);
                 }
 
+                if ((a->is_suv && b->is_player) || (b->is_suv && a->is_player)) {
+                    /* embestida de camioneta: empujon extra hacia afuera del golpe */
+                    Entity *pl = a->is_player ? a : b;
+                    V3 n = a->is_player ? vscale(best_n, -1.0f) : best_n;   /* de la camioneta hacia el jugador */
+                    if (closing > 5.0f && pl->bump_cool <= 0) {
+                        ent_add(r, pl, vscale(n, 0.45f * closing), v3(0, 0, 0));
+                        set_msg(r, pl->player, "EMBESTIDA!", col(255, 90, 60), 1.0f);
+                    }
+                }
                 if (r->mode != MODE_CHOQUES && (a->is_police || b->is_police) && (a->is_player || b->is_player)) {
                     Entity *pol = a->is_police ? a : b, *pl = a->is_player ? a : b;
-                    if (closing > 16.0f && pol->invuln <= 0) {
+                    if (closing > (pol->is_suv ? 26.0f : 16.0f) && pol->invuln <= 0) {
                         crash_start(r, pol, vscale(ent_vel(r, pl), 0.8f));
                         set_msg(r, pl->player, "PATRULLA FUERA!", col(90, 200, 255), 2.0f);
                     }

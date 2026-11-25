@@ -683,3 +683,39 @@ void traffic_build_mesh(Mesh *m, int kind, Col paint) {
     }
     mesh_quad_flat(m, v3(-1.05f, 0.03f, -2.6f), v3(1.05f, 0.03f, -2.6f), v3(1.05f, 0.03f, 2.6f), v3(-1.05f, 0.03f, 2.6f), col(30, 30, 30));
 }
+
+/* camioneta de policia: carroceria alta y cuadrada en negro, puertas blancas, defensa de empuje grande y torreta */
+void suv_build_mesh(Mesh *m) {
+    Col paint = col(22, 22, 28), white = col(242, 242, 246), dark = col(30, 30, 34), glass = col(36, 52, 80), black = col(12, 12, 14);
+    Sec s[] = {{-2.45f, 0.98f, 0.36f, 0.84f, 1.04f}, {-1.70f, 1.03f, 0.34f, 0.92f, 1.10f}, {1.00f, 1.04f, 0.34f, 0.94f, 1.12f},
+               {2.30f, 1.02f, 0.38f, 0.94f, 1.12f}, {2.45f, 0.98f, 0.42f, 0.92f, 1.08f}};
+    int side;
+    mesh_init(m);
+    g_wheel_n = 0;
+    body(m, s, 5, paint, dark);
+    cabin(m, -1.05f, 2.25f, 1.10f, 1.88f, 0.94f, 0.86f, 0.50f, 0.08f, paint, glass);
+    for (side = -1; side <= 1; side += 2) {
+        /* puertas blancas y estribo */
+        mesh_box(m, v3(side > 0 ? 1.035f : -1.055f, 0.56f, -0.95f), v3(side > 0 ? 1.055f : -1.035f, 1.08f, 1.20f), white, white);
+        mesh_box(m, v3(side > 0 ? 1.00f : -1.12f, 0.36f, -1.10f), v3(side > 0 ? 1.12f : -1.00f, 0.42f, 1.30f), black, black);
+        /* pilares de las 4 puertas y ventana trasera lateral */
+        mesh_quad_flat(m, v3(side * 0.945f, 1.10f, 0.10f), v3(side * 0.945f, 1.10f, 0.22f), v3(side * 0.865f, 1.88f, 0.22f), v3(side * 0.865f, 1.88f, 0.10f), paint);
+        mesh_quad_flat(m, v3(side * 0.945f, 1.10f, 1.30f), v3(side * 0.945f, 1.10f, 1.42f), v3(side * 0.865f, 1.88f, 1.42f), v3(side * 0.865f, 1.88f, 1.30f), paint);
+    }
+    /* defensa de empuje: marco tubular grande al frente */
+    mesh_box(m, v3(-0.95f, 0.30f, -2.70f), v3(0.95f, 0.42f, -2.55f), black, black);
+    mesh_box(m, v3(-0.95f, 0.92f, -2.70f), v3(0.95f, 1.02f, -2.55f), black, black);
+    mesh_box(m, v3(-0.60f, 0.30f, -2.70f), v3(-0.48f, 1.02f, -2.55f), black, black);
+    mesh_box(m, v3(0.48f, 0.30f, -2.70f), v3(0.60f, 1.02f, -2.55f), black, black);
+    mesh_box(m, v3(-0.95f, 0.30f, -2.62f), v3(-0.85f, 1.02f, -2.45f), black, black);
+    mesh_box(m, v3(0.85f, 0.30f, -2.62f), v3(0.95f, 1.02f, -2.45f), black, black);
+    /* base de la torreta y luces fijas (la torreta que destella se dibuja encima) */
+    mesh_box(m, v3(-0.70f, 1.86f, -0.30f), v3(0.70f, 1.90f, 0.10f), dark, dark);
+    mesh_box(m, v3(-0.64f, 1.90f, -0.24f), v3(-0.04f, 2.03f, 0.04f), col(150, 30, 30), col(150, 30, 30));
+    mesh_box(m, v3(0.04f, 1.90f, -0.24f), v3(0.64f, 2.03f, 0.04f), col(30, 60, 160), col(30, 60, 160));
+    /* llanta de refaccion atras */
+    mesh_box(m, v3(-0.42f, 0.70f, 2.45f), v3(0.42f, 1.42f, 2.62f), black, dark);
+    wheel(m, -0.98f, -1.55f, 0.42f, 0.34f); wheel(m, 0.98f, -1.55f, 0.42f, 0.34f);
+    wheel(m, -0.98f, 1.50f, 0.42f, 0.34f); wheel(m, 0.98f, 1.50f, 0.42f, 0.34f);
+    lights(m, -2.45f, 2.45f, 0.70f, 0.80f, 0.86f);
+}

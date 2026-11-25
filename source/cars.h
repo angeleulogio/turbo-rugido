@@ -42,5 +42,7 @@ extern const CarInfo CAR_INFO[CAR_COUNT];
 extern int g_wheel_first[4], g_wheel_count[4];
 /* una rueda suelta centrada en el origen (para las que salen volando) */
 void wheel_build_mesh(Mesh *m);
+/* camioneta de policia (solo la maneja la policia) */
+void suv_build_mesh(Mesh *m);
 
 #endif

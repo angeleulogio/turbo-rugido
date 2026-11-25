@@ -231,6 +231,7 @@ static void load_race(void) {
         Mesh m;
         if (!e->active && !e->is_police) continue;
         if (e->is_traffic) traffic_build_mesh(&m, e->car, e->paint);
+        else if (e->is_suv) suv_build_mesh(&m);
         else car_build_mesh(&m, CAR_SPECS[e->car].shape, e->paint, e->accent);
         g_ent_gpu[i] = plat_mesh_upload(&m);
         if (G.mode == MODE_CHOQUES) {
@@ -351,7 +352,7 @@ static void draw_minimap(const Track *tr, float cx, float cy, float size, const 
             const Entity *e = &r->ent[i];
             float x = cx + (e->pos.x - tr->center.x) * sc, y = cy + (e->pos.z - tr->center.z) * sc;
             if (!e->active || !e->is_police) continue;
-            plat_rect(x - 3, y - 3, 6, 6, (((int)(r->time * 6)) & 1) ? col(255, 50, 50) : col(60, 120, 255));
+            { int q = e->is_suv ? 5 : 3; plat_rect(x - q, y - q, 2 * q, 2 * q, (((int)(r->time * 6)) & 1) ? col(255, 50, 50) : col(60, 120, 255)); }
         }
     }
 }
@@ -524,7 +525,13 @@ static void render_race(void) {
             if (e->invuln > 0 && ((int)(e->invuln * 12) & 1)) continue;
             race_entity_matrix(r, e, m);
             plat_draw(g_ent_gpu[i], m);
-            if (e->is_police || (e->is_player && e->car == CAR_POLICE && !e->crashed))
+            if (e->is_suv) {   /* la torreta va mas alta en la camioneta */
+                M34 up, m2;
+                m34_identity(up);
+                up[1][3] = 0.50f;
+                m34_mul(m2, m, up);
+                if (!e->crashed) plat_draw(g_lightbar[((int)(r->time * 7.0f + 0.5f)) & 1], m2);
+            } else if (e->is_police || (e->is_player && e->car == CAR_POLICE && !e->crashed))
                 plat_draw(g_lightbar[((int)(r->time * 7.0f)) & 1], m);
         }
         for (i = 0; i < WRECK_MAX; i++) {

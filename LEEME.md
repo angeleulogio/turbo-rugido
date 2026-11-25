@@ -88,6 +88,7 @@ Los trazados de PARQUE TUCAN y EL SEMINARIO se basan en mapas; el de PARQUE TUCA
 
 ## Cambios recientes
 - En el menú de autos, X cambia la pintura (original o 6 colores), con muestra del color y la vista previa pintada. Cada jugador elige la suya.
+- Camionetas de policía en la búsqueda 5: pesadas, cuadradas, con defensa de empuje y torreta. Llegan 2 por cada jugador como máximo (la segunda unos segundos después), lo alcanzan más rápido que las patrullas y lo embisten de frente y de costado; sus golpes empujan fuerte (aviso EMBESTIDA!). Cuesta mucho sacarlas de la carrera. Si te detienen o baja la búsqueda, se retiran. En el minimapa salen con un punto más grande.
 - De 1 a 4 jugadores: con 2 la pantalla se divide arriba y abajo; con 3 o 4 se divide en cuatro (con 3, el cuarto cuadro muestra el mapa con todos los autos). Cada jugador elige su auto y su pintura en orden. Con 3 o 4 jugadores se ve un poco menos lejos para que el juego no se haga lento.
 - Peralte en SUPEROVALO (hasta 18° en las curvas), PARQUE TUCAN, LAGO CANTERA y PARQUE LAGO (unos 6° a 7°). Los tramos peraltados se levantan lo justo para que el borde bajo quede a ras de suelo.
 - PARQUE TUCAN con subidas y bajadas más marcadas (de 1 a 16 m).
