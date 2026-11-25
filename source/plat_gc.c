@@ -16,7 +16,38 @@ static GXRModeObj *rmode;
 static void *xfb[2];
 static int fbi;
 static float sx_scale = 1.0f, sy_scale = 1.0f;
-static Mtx view_mtx;
+static Mtx view_mtx ATTRIBUTE_ALIGN(32);
+
+/* Matrices en C puro: las versiones de libogc usan instrucciones "paired single" que leen
+   las matrices de dos en dos y necesitan que esten alineadas a 8 bytes. Las matrices que
+   vienen del juego son variables locales y su alineacion depende del compilador, asi que
+   con un compilador nuevo se pueden leer corridas (los modelos salen estirados). */
+static void mtx_concat_c(const float a[3][4], const float b[3][4], Mtx ab) {
+    int i, j;
+    for (i = 0; i < 3; i++)
+        for (j = 0; j < 4; j++)
+            ab[i][j] = a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j] + (j == 3 ? a[i][3] : 0.0f);
+}
+
+static void mtx_identity_c(Mtx m) {
+    int i, j;
+    for (i = 0; i < 3; i++)
+        for (j = 0; j < 4; j++) m[i][j] = (i == j) ? 1.0f : 0.0f;
+}
+
+/* proyeccion en perspectiva (la misma formula que guPerspective, sin depender de tanf) */
+static void perspectiva_c(Mtx44 mt, float fovy, float aspect, float n, float f) {
+    float a = fovy * 0.5f * 3.14159265f / 180.0f;
+    float cot = cosf(a) / sinf(a), tmp = 1.0f / (f - n);
+    int i, j;
+    for (i = 0; i < 4; i++)
+        for (j = 0; j < 4; j++) mt[i][j] = 0.0f;
+    mt[0][0] = cot / aspect;
+    mt[1][1] = cot;
+    mt[2][2] = -n * tmp;
+    mt[2][3] = -(f * n) * tmp;
+    mt[3][2] = -1.0f;
+}
 
 typedef struct { void *dl; u32 size; } GMesh;
 
@@ -91,7 +122,7 @@ void *plat_mesh_upload(const Mesh *m) {
     u32 cap, len;
     int i, start;
     if (!m || m->n < 3) return NULL;
-    cap = (u32)m->n * 16 + (m->n / DL_BATCH + 1) * 8 + 128;
+    cap = (u32)m->n * 16 + (m->n / DL_BATCH + 1) * 8 + 128 + 64;
     cap = (cap + 31) & ~31u;
     g = (GMesh *)malloc(sizeof(GMesh));
     if (!g) return NULL;
@@ -112,6 +143,9 @@ void *plat_mesh_upload(const Mesh *m) {
         }
         GX_End();
     }
+    /* 32 bytes de GX_NOP: empujan a la lista lo ultimo que quedo en el bufer de escritura,
+       para que no se cuele en la cola principal de la GPU */
+    for (i = 0; i < 32; i++) wgPipe->U8 = 0;
     len = GX_EndDispList();
     if (len == 0) { free(g->dl); free(g); return NULL; }
     g->size = len;
@@ -152,14 +186,14 @@ static Rect2 rects[MAX_RECTS];
 static int nrects;
 
 static void set_2d_state(const Viewport *clip) {
-    Mtx44 ortho;
-    Mtx ident;
+    Mtx44 ortho ATTRIBUTE_ALIGN(32);
+    Mtx ident ATTRIBUTE_ALIGN(32);
     GX_SetViewport(0, 0, rmode->fbWidth, rmode->efbHeight, 0, 1);
     if (clip) GX_SetScissor((u32)(clip->x * sx_scale), (u32)(clip->y * sy_scale), (u32)(clip->w * sx_scale), (u32)(clip->h * sy_scale));
     else GX_SetScissor(0, 0, rmode->fbWidth, rmode->efbHeight);
     guOrtho(ortho, 0, SCREEN_H, 0, SCREEN_W, 0, 10);
     GX_LoadProjectionMtx(ortho, GX_ORTHOGRAPHIC);
-    guMtxIdentity(ident);
+    mtx_identity_c(ident);
     GX_LoadPosMtxImm(ident, GX_PNMTX0);
     GX_SetCurrentMtx(GX_PNMTX0);
     GX_SetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
@@ -218,14 +252,14 @@ void plat_2d_end(void) { flush_rects(); }
 /* ------------------------------------------------------------ */
 
 void plat_view_begin(const Viewport *vp, float fovy, float zn, float zf, M34 view, Col fog, float fs, float fe) {
-    Mtx44 proj;
+    Mtx44 proj ATTRIBUTE_ALIGN(32);
     GXColor fc = {fog.r, fog.g, fog.b, 255};
     flush_rects();
     GX_SetViewport(vp->x * sx_scale, vp->y * sy_scale, vp->w * sx_scale, vp->h * sy_scale, 0, 1);
     GX_SetScissor((u32)(vp->x * sx_scale), (u32)(vp->y * sy_scale), (u32)(vp->w * sx_scale), (u32)(vp->h * sy_scale));
-    guPerspective(proj, fovy, (f32)vp->w / (f32)vp->h, zn, zf);
+    perspectiva_c(proj, fovy, (f32)vp->w / (f32)vp->h, zn, zf);
     GX_LoadProjectionMtx(proj, GX_PERSPECTIVE);
-    memcpy(view_mtx, view, sizeof(Mtx));
+    memcpy(view_mtx, view, sizeof(Mtx));   /* copia alineada de la camara */
     GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
     GX_SetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
     GX_SetFog(GX_FOG_LIN, fs, fe, zn, zf, fc);
@@ -234,9 +268,9 @@ void plat_view_begin(const Viewport *vp, float fovy, float zn, float zf, M34 vie
 
 void plat_draw(void *h, M34 model) {
     GMesh *g = (GMesh *)h;
-    Mtx mv;
+    Mtx mv ATTRIBUTE_ALIGN(32);
     if (!g) return;
-    if (model) guMtxConcat(view_mtx, model, mv);
+    if (model) mtx_concat_c(view_mtx, model, mv);
     else memcpy(mv, view_mtx, sizeof(Mtx));
     GX_LoadPosMtxImm(mv, GX_PNMTX0);
     GX_CallDispList(g->dl, g->size);
