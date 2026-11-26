@@ -6,6 +6,7 @@
 #include <malloc.h>
 #include <ogc/lwp_watchdog.h>
 #include "plat.h"
+#include "musica.h"
 #include "game.h"
 
 #define FIFO_SIZE (512 * 1024)
@@ -310,6 +311,8 @@ void plat_read_pads(PadIn pads[MAX_PLAYERS]) {
         p->pressed = map_buttons(PAD_ButtonsDown(i));
         p->sx = stick_norm(PAD_StickX(i));
         p->sy = stick_norm(PAD_StickY(i));
+        p->cx = stick_norm(PAD_SubStickX(i));
+        p->cy = stick_norm(PAD_SubStickY(i));
         p->trig_l = trig_norm(PAD_TriggerL(i));
         p->trig_r = trig_norm(PAD_TriggerR(i));
     }
@@ -331,6 +334,12 @@ static int sfx_voice = 2;
 #define SIREN_RATE 32000
 static s16 *siren_buf;
 static int siren_bytes, siren_on;
+/* musica sintetizada (musica.c): el tema del menu en la voz 11 y el jingle en la 9 */
+#define MUSIC_VOICE 11
+#define JINGLE_VOICE 9
+#define MUSIC_RATE 22050
+static s16 *music_buf, *jingle_buf;
+static int music_bytes, jingle_bytes, music_now;
 
 static s16 *alloc_snd(int samples, int *bytes) {
     int b = (samples * 2 + 31) & ~31;
@@ -417,6 +426,30 @@ static void audio_init(void) {
         }
         DCFlushRange(siren_buf, siren_bytes);
     }
+    {
+        int n = musica_menu_muestras(MUSIC_RATE);
+        music_buf = alloc_snd(n, &music_bytes);
+        musica_menu_render(music_buf, n, MUSIC_RATE);
+        DCFlushRange(music_buf, music_bytes);
+        n = musica_jingle_muestras(MUSIC_RATE);
+        jingle_buf = alloc_snd(n, &jingle_bytes);
+        musica_jingle_render(jingle_buf, n, MUSIC_RATE);
+        DCFlushRange(jingle_buf, jingle_bytes);
+    }
+}
+
+void plat_music(int which) {
+    if (!music_buf) return;
+    if (which == music_now && (which == 0 || ASND_StatusVoice(MUSIC_VOICE) != SND_UNUSED)) return;
+    ASND_StopVoice(MUSIC_VOICE);
+    if (which == 1) ASND_SetInfiniteVoice(MUSIC_VOICE, VOICE_MONO_16BIT, MUSIC_RATE, 0, music_buf, music_bytes, 150, 150);
+    music_now = which;
+}
+
+void plat_jingle(void) {
+    if (!jingle_buf) return;
+    ASND_StopVoice(JINGLE_VOICE);
+    ASND_SetVoice(JINGLE_VOICE, VOICE_MONO_16BIT, MUSIC_RATE, 0, jingle_buf, jingle_bytes, 230, 230, NULL);
 }
 
 void plat_siren(float vol) {

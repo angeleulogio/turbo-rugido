@@ -13,7 +13,11 @@ Todas las pistas, autos, sonidos y textos están generados por código: es un di
 - **24 autos**: FURIA R, COMETA GT, TORMENTA 4X, BRISA V12, HAYASHI INCEPTION (sedán de 4 puertas diseñado por el hermano del jugador, con tracción 4x4), y tres dibujados por el jugador: YILDIZ GT (superdeportivo en cuña de los 80) ATLAS 84 (sedán cuadrado de los 80, tracción trasera y muy fácil de derrapar) y LUTECE V10 (sedán con motor V10 de carreras, el más rápido del juego). Seis más de una página de los hermanos (silueta rosa del hermano y dibujo a lápiz del jugador): TAURO V10 (superdeportivo italiano con alerón y aleta, tracción total; el más rápido y el que más acelera del juego), CICLON R (roadster descapotable con cola de pato), RAYO 4P (sedán rápido de 4 puertas, tracción total), LINCE GT (coupé fastback 2+2), VIENTO SP (speedster sin techo con dos arcos) y T155 (deportivo moderno de parrilla grande). Y tres de una segunda página: SIRIO GT (coupé bajo de resistencia con faros redondos), SVSR5 (deportivo de los 50 con techo redondo, cromados y dos tonos) y BELFI V8 69 (muscle car fastback de 1969 con cola levantada). Además el CARRITO: copia del cochecito de juguete del jugador, sedán rojo de los 90 con faldones negros, filetes blancos y faros en el cofre. Y tres de una tercera página de los hermanos: HALCON R (fastback de los 90 con cola levantada) y TORNADO V8 (coupé cuadrado tipo muscle con franjas), los dos casi tan rápidos como el TAURO V10, y QUASAR (superdeportivo curvo de motor central, con tomas laterales y escapes redondos). Los dos autos del tráfico también se pueden manejar: SEDAN CIUDAD y FURGONETA (los más lentos del juego). Además la PATRULLA, el mismo auto de las persecuciones, con su torreta encendida.
 - **Clases C, B y A**: los autos están divididos por velocidad. Clase C, los más lentos (COMETA GT, TORMENTA 4X, HAYASHI INCEPTION, ATLAS 84, CICLON R, SVSR5, BELFI V8 69, CARRITO, SEDAN CIUDAD, FURGONETA); clase B, los intermedios (FURIA R, RAYO 4P, LINCE GT, VIENTO SP, T155, SIRIO GT, PATRULLA); clase A, los más rápidos (BRISA V12, YILDIZ GT, LUTECE V10, TAURO V10, HALCON R, TORNADO V8, QUASAR). En el menú de autos, izquierda/derecha recorren los autos de la clase y arriba/abajo cambian de clase. Los rivales de la IA se eligen de la misma clase que el auto del jugador 1. El garage también muestra la clase.
 - **GARAGE** (en la pantalla de título): cada auto en un piso de exhibición con su ficha: barras de velocidad, aceleración, manejo y derrape; motor, potencia, peso, tracción y velocidad máxima; una descripción y quién lo dibujó. Izquierda/derecha cambian de auto, L/R lo giran, la palanca acerca o aleja, X cambia la pintura, A activa o quita el giro automático y B sale.
-- 3 rivales controlados por la IA, 3 vueltas, posiciones, mejor vuelta, minimapa, pausa y pantalla de resultados.
+- 3 rivales controlados por la IA, de 1 a 10 vueltas (se eligen con izquierda/derecha en la pantalla de PISTA), posiciones, mejor vuelta, minimapa, pausa y pantalla de resultados.
+
+## Música
+
+El menú tiene un tema original al estilo de los juegos de Super Nintendo: melodía de pulso con vibrato y eco, arpegios, bajo y batería, en un ciclo de unos 30 segundos. Al cruzar la meta suena un jingle de 8 bits de 3 segundos. Las dos se generan dentro del juego (`source/musica.c`), sin archivos de audio.
 
 ## Controles (mando de GameCube)
 
@@ -24,6 +28,7 @@ Todas las pistas, autos, sonidos y textos están generados por código: es un di
 | B o gatillo L (analógico) | Frenar / marcha atrás |
 | X | Turbo (DERRAPE y CHOQUES); en el menú de autos, cambiar la pintura |
 | Z | Cambiar cámara (cerca / lejos) |
+| Palanca C | Girar la cámara alrededor del auto hacia donde la empujes (abajo = mirar hacia atrás); al soltarla regresa detrás del auto |
 | START | Pausa |
 
 **Cómo derrapar:**
@@ -89,7 +94,8 @@ Los trazados de PARQUE TUCAN y EL SEMINARIO se basan en mapas; el de PARQUE TUCA
 
 ## Cambios recientes
 - En el menú de autos, X cambia la pintura (original o 6 colores), con muestra del color y la vista previa pintada. Cada jugador elige la suya.
-- Camionetas de policía en la búsqueda 5: pesadas, cuadradas, con defensa de empuje y torreta. Llegan 2 por cada jugador como máximo (la segunda unos segundos después), lo alcanzan más rápido que las patrullas y lo embisten de frente y de costado; sus golpes empujan fuerte (aviso EMBESTIDA!). Cuesta mucho sacarlas de la carrera. Si te detienen o baja la búsqueda, se retiran. En el minimapa salen con un punto más grande.
+- Camionetas de policía en la búsqueda 5: pesadas, cuadradas, con defensa de empuje y torreta. Llegan 2 por cada jugador como máximo (la segunda unos segundos después), lo alcanzan más rápido que las patrullas y lo embisten de frente y de costado; sus golpes empujan fuerte (aviso EMBESTIDA!). Cuesta mucho sacarlas de la carrera. Si te detienen o baja la búsqueda, se retiran. En el minimapa salen con un punto más grande. Su objetivo es hacerte TAKEDOWN: aparecen más cerca, aceleran más y no te sueltan; se ponen del lado del centro para empujarte contra el muro. Una embestida muy fuerte, un golpe que te aplaste contra el muro o tres embestidas en 8 segundos te sacan de la carrera (TAKEDOWN!) hasta que reapareces. Tras la segunda embestida sale el aviso CUIDADO! OTRO Y ES TAKEDOWN.
+- SUPER PATRULLA: si un jugador corre con un auto clase A, las patrullas son superdeportivos de policía (negro con puertas blancas, torreta baja y defensa), más rápidos y con más aceleración, capaces de alcanzar a cualquier auto clase A. Cuando aparece la primera sale el aviso SUPER PATRULLA!
 - De 1 a 4 jugadores: con 2 la pantalla se divide arriba y abajo; con 3 o 4 se divide en cuatro (con 3, el cuarto cuadro muestra el mapa con todos los autos). Cada jugador elige su auto y su pintura en orden. Con 3 o 4 jugadores se ve un poco menos lejos para que el juego no se haga lento.
 - Peralte en SUPEROVALO (hasta 18° en las curvas), PARQUE TUCAN, LAGO CANTERA y PARQUE LAGO (unos 6° a 7°). Los tramos peraltados se levantan lo justo para que el borde bajo quede a ras de suelo.
 - PARQUE TUCAN con subidas y bajadas más marcadas (de 1 a 16 m).

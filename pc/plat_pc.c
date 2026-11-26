@@ -155,6 +155,9 @@ void plat_read_pads(PadIn pads[MAX_PLAYERS]) { int i; for (i = 0; i < MAX_PLAYER
 void plat_engine(int player, int on, float rpm01, float load) { (void)player; (void)on; (void)rpm01; (void)load; }
 void plat_sfx(int id) { (void)id; }
 void plat_siren(float vol) { (void)vol; }
+int g_pc_music = 0, g_pc_jingles = 0;   /* pruebas: que musica sonaria y cuantos jingles */
+void plat_music(int which) { g_pc_music = which; }
+void plat_jingle(void) { g_pc_jingles++; }
 
 void pc_save_ppm(const char *path) {
     FILE *f = fopen(path, "wb");

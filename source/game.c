@@ -20,6 +20,8 @@ static struct {
     int loaded;
     float nav_cool[MAX_PLAYERS];
     float prev_sx[MAX_PLAYERS], prev_sy[MAX_PLAYERS];
+    int laps;          /* vueltas elegidas (1..10) */
+    float res_t;       /* tiempo en la pantalla de resultados (la musica vuelve tras el jingle) */
 } G;
 
 static Track g_track;                 /* pista de la carrera */
@@ -162,6 +164,7 @@ void game_init(void) {
     int i;
     memset(&G, 0, sizeof(G));
     G.nplayers = 1;
+    G.laps = RACE_LAPS;
     G.cars[2] = 2; G.cars[3] = 3;
     G.cars[0] = 0; G.cars[1] = 1;
     for (i = 0; i < TRACK_COUNT; i++) track_build_centerline(&g_preview[i], i);
@@ -209,6 +212,7 @@ static void apply_player_paints(void);
 static void restart_race(void) {
     int i;
     race_setup(&g_race, &g_track, (PhysMode)G.mode, G.nplayers, G.cars, G.police);
+    g_race.laps = G.laps < 1 ? RACE_LAPS : G.laps;
     apply_player_paints();
     for (i = 0; i < ENT_MAX; i++) g_race.ent[i].dmg_reset = 1;
     process_damage();
@@ -232,7 +236,7 @@ static void load_race(void) {
         if (!e->active && !e->is_police) continue;
         if (e->is_traffic) traffic_build_mesh(&m, e->car, e->paint);
         else if (e->is_suv) suv_build_mesh(&m);
-        else car_build_mesh(&m, CAR_SPECS[e->car].shape, e->paint, e->accent);
+        else car_build_mesh(&m, car_spec(e->car)->shape, e->paint, e->accent);
         g_ent_gpu[i] = plat_mesh_upload(&m);
         if (G.mode == MODE_CHOQUES) {
             int w;
@@ -389,8 +393,8 @@ static void draw_hud(const Viewport *vp, int p) {
 
     /* vuelta y tiempo */
     {
-        int lap = e->lap < 1 ? 1 : (e->lap > RACE_LAPS ? RACE_LAPS : e->lap);
-        snprintf(b, sizeof(b), "VUELTA %d/%d", lap, RACE_LAPS);
+        int lap = e->lap < 1 ? 1 : (e->lap > g_race.laps ? g_race.laps : e->lap);
+        snprintf(b, sizeof(b), "VUELTA %d/%d", lap, g_race.laps);
         text_draw_right(x0 + W - 16, y0 + 12, b, S, WHITE);
         fmt_time(b, sizeof(b), e->finished ? e->finish_time : r->time);
         text_draw_right(x0 + W - 16, y0 + 12 + S * 9, b, S, WHITE);
@@ -701,6 +705,9 @@ void game_frame(const PadIn pads[MAX_PLAYERS], float dt) {
     unsigned n0 = nav(&pads[0], 0);
     unsigned pr0 = pads[0].pressed;
     G.t += dt;
+    if (G.st == GS_RESULTS) G.res_t += dt;
+    /* musica del menu en todas las pantallas fuera de la carrera (en resultados, despues del jingle) */
+    plat_music((G.st == GS_RACE || G.st == GS_LOADING || G.st == GS_PAUSE || (G.st == GS_RESULTS && G.res_t < 1.0f)) ? 0 : 1);
 
     plat_frame_begin();
 
@@ -798,8 +805,12 @@ void game_frame(const PadIn pads[MAX_PLAYERS], float dt) {
         }
         plat_rect(SCREEN_W / 2 - 85, 290, 170, 156, cola(0, 0, 0, 120));
         draw_minimap(&g_preview[G.sel], SCREEN_W / 2, 368, 145, NULL);
-        snprintf(b, sizeof(b), "%d M - %d VUELTAS", (int)g_preview[G.sel].length, RACE_LAPS);
-        text_draw_center(SCREEN_W / 2, 454, b, 2, WHITE);
+        snprintf(b, sizeof(b), "%d M   < %d VUELTA%s >", (int)g_preview[G.sel].length, G.laps, G.laps == 1 ? "" : "S");
+        text_draw_center(SCREEN_W / 2, 450, b, 2, WHITE);
+        text_draw_center(SCREEN_W / 2, 470, "IZQ/DER: CANTIDAD DE VUELTAS", 1.2f, GREY);
+        /* izquierda/derecha: elegir de 1 a 10 vueltas */
+        if (n0 & BTN_LEFT) { G.laps = G.laps <= 1 ? 10 : G.laps - 1; plat_sfx(SFX_SELECT); }
+        if (n0 & BTN_RIGHT) { G.laps = G.laps >= 10 ? 1 : G.laps + 1; plat_sfx(SFX_SELECT); }
         if (n0 & BTN_UP) { G.sel = (G.sel + TRACK_COUNT - 1) % TRACK_COUNT; plat_sfx(SFX_SELECT); }
         if (n0 & BTN_DOWN) { G.sel = (G.sel + 1) % TRACK_COUNT; plat_sfx(SFX_SELECT); }
         if (pr0 & BTN_A) { G.track = G.sel; G.st = GS_CAR; G.car_player = 0; G.sel = G.cars[0]; plat_sfx(SFX_SELECT); }
@@ -886,7 +897,7 @@ void game_frame(const PadIn pads[MAX_PLAYERS], float dt) {
     case GS_RACE:
         race_update(&g_race, pads, dt); process_damage();
         render_race();
-        if (g_race.state == RS_FINISHED && g_race.finish_wait > 3.5f) { G.st = GS_RESULTS; G.res_sel = 0; }
+        if (g_race.state == RS_FINISHED && g_race.finish_wait > 3.5f) { G.st = GS_RESULTS; G.res_sel = 0; G.res_t = 0; }
         if ((pads[0].pressed | pads[1].pressed | pads[2].pressed | pads[3].pressed) & BTN_START) { G.st = GS_PAUSE; G.pause_sel = 0; plat_sfx(SFX_SELECT); }
         break;
 

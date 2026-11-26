@@ -77,6 +77,11 @@ const char CAR_CLASS[CAR_COUNT] = {
     'B'                                          /* PATRULLA */
 };
 
+/* super patrulla: superdeportivo de motor central con la pintura de la policia */
+const CarSpec SUPER_PATRULLA = {"SUPER PATRULLA", "INTERCEPTOR DE ALTA VELOCIDAD", 1.0f, 1.0f, 0.9f, 82.0f, 12.5f, 1.08f, 1.0f, 1300, 430000, 1.15f, 2, 0.45f, 22, {20, 20, 26, 255}, {245, 245, 250, 255}};
+
+const CarSpec *car_spec(int i) { return i == CAR_SUPERPOLICE ? &SUPER_PATRULLA : &CAR_SPECS[i]; }
+
 const Col CAR_ALT_PAINTS[6] = {
     {30, 160, 90, 255}, {240, 120, 30, 255}, {230, 230, 235, 255},
     {40, 40, 48, 255},  {60, 190, 220, 255}, {200, 40, 120, 255}
@@ -184,6 +189,20 @@ void car_build_mesh(Mesh *m, int shape, Col paint, Col accent) {
     Col dark = col(30, 30, 34), glass = col(36, 52, 80);
     if (shape >= 100) {   /* autos del trafico: misma malla que en la calle */
         traffic_build_mesh(m, shape - 100, paint);
+        return;
+    }
+    if (shape == 22) {
+        /* super patrulla: el superdeportivo QUASAR en negro, puertas blancas, torreta baja y defensa */
+        Col white = accent, rojo = col(220, 30, 40), azul = col(30, 80, 230);
+        car_build_mesh(m, 21, paint, white);
+        mesh_box(m, v3(-1.015f, 0.34f, -1.45f), v3(-0.995f, 0.80f, -0.30f), white, white);
+        mesh_box(m, v3(0.995f, 0.34f, -1.45f), v3(1.015f, 0.80f, -0.30f), white, white);
+        mesh_box(m, v3(-0.55f, 1.10f, -0.10f), v3(0.55f, 1.14f, 0.24f), col(30, 30, 36), col(30, 30, 36));
+        mesh_box(m, v3(-0.50f, 1.14f, -0.06f), v3(-0.03f, 1.24f, 0.20f), rojo, rojo);
+        mesh_box(m, v3(0.03f, 1.14f, -0.06f), v3(0.50f, 1.24f, 0.20f), azul, azul);
+        mesh_box(m, v3(-0.75f, 0.18f, -2.42f), v3(0.75f, 0.42f, -2.30f), col(30, 30, 36), col(30, 30, 36));   /* defensa de empuje */
+        mesh_box(m, v3(-0.86f, 0.46f, -2.32f), v3(-0.62f, 0.52f, -2.30f), azul, azul);   /* luces en la parrilla */
+        mesh_box(m, v3(0.62f, 0.46f, -2.32f), v3(0.86f, 0.52f, -2.30f), rojo, rojo);
         return;
     }
     if (shape == 8) {

@@ -21,6 +21,7 @@ enum {
 typedef struct {
     int connected;
     float sx, sy;          /* palanca -1..1 (sy + = arriba) */
+    float cx, cy;          /* palanca C -1..1 (camara) */
     float trig_l, trig_r;  /* gatillos analogicos 0..1 */
     unsigned held, pressed;
 } PadIn;
@@ -46,5 +47,7 @@ enum { SFX_BEEP = 0, SFX_GO, SFX_CRASH, SFX_BUMP, SFX_BOOST, SFX_SELECT, SFX_COU
 void plat_engine(int player, int on, float rpm01, float load);
 void plat_sfx(int id);
 void plat_siren(float vol);       /* sirena de policia en bucle (0 = apagada) */
+void plat_music(int which);       /* 0 = sin musica, 1 = tema del menu (en bucle) */
+void plat_jingle(void);           /* fanfarria de 3 s al cruzar la meta */
 
 #endif

@@ -92,6 +92,9 @@ typedef struct {
     float bust;                 /* 0..3 s: cuanto falta para ser detenido */
     float slow;                 /* medidor de camara lenta (CALLE) */
     int slowing;
+    float orb, cx, cy;          /* giro de la camara alrededor del auto con la palanca C */
+    int suv_golpes;             /* embestidas recientes de las camionetas */
+    float suv_golpe_t;
 } PlayerView;
 
 typedef struct {
@@ -117,6 +120,10 @@ typedef struct {
     float siren;                /* volumen de la sirena para el jugador 1 */
     float timescale;            /* camara lenta del jugador (CALLE) */
     int suv_aviso;              /* ya se aviso que vienen las camionetas */
+    int laps;                   /* vueltas de la carrera (1..10) */
+    int super_police;           /* hay un jugador con auto clase A: salen las super patrullas */
+    int super_aviso;
+    int suv_takedowns;          /* takedowns que hicieron las camionetas (estadistica) */
     Wreck wreck[WRECK_MAX];
     int wreck_next;
     Debris debris[DEBRIS_MAX];

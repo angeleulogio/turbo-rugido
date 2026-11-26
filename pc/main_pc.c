@@ -37,6 +37,7 @@ static void sim_test(int trk, int mode, int car) {
     float lap_t[8] = {0}, last = 0, maxspd = 0;
     track_build(&tr, trk);
     race_setup(&r, &tr, (PhysMode)mode, 1, cars, police);
+    if (getenv("VUELTAS")) r.laps = atoi(getenv("VUELTAS"));
     if (calor5) r.heat_t = 185.0f;   /* prueba: busqueda 5 desde el inicio */
     for (f = 0; f < 60 * 420; f++) {
         PadIn p[MAX_PLAYERS];
@@ -86,7 +87,8 @@ static void sim_test(int trk, int mode, int car) {
         for (i = 0; i < laps_done && i < 4; i++) printf(" %.1f", lap_t[i]);
         printf(" | pos=%d muros=%d choques=%d vmax=%.0fkmh nan=%d | IA:", r.ent[RACERS - 1].place, walls, crashes, maxspd * 3.6f, nan);
         for (i = 0; i < RACERS - 1; i++) printf(" %d%s", r.ent[i].place, r.ent[i].finished ? "" : "*");
-        if (calor5) printf(" | CAMIONETAS max=%d embestidas=%d", suv_max, embestidas);
+        if (calor5) printf(" | CAMIONETAS max=%d embestidas=%d TAKEDOWNS=%d", suv_max, embestidas, r.suv_takedowns);
+        if (r.police) printf(" | SUPER=%d", r.super_police);
         if (police) printf(" | POLICIA calor=%d detenido=%d retenes=%d patrullasfuera=%d cerca=%.0f%%", maxheat, busts, rb, pcrash, 100.0f * close_f / (r.time * 60.0f));
         printf("\n");
     }
@@ -192,6 +194,55 @@ int main(int argc, char **argv) {
             if (cam) printf(" | camionetas maximas por jugador: %d %d %d %d", maxp[0], maxp[1], maxp[2], maxp[3]);
             printf("\n");
         }
+        return 0;
+    }
+    if (argc > 1 && strcmp(argv[1], "nuevas") == 0) {
+        /* super patrulla, camara con palanca C y selector de vueltas */
+        int f, n = 0;
+        extern Race *pc_race(void);
+        game_init();
+        game_debug_start_race(0, 100, 1, 8, 9);   /* TAURO V10 (clase A) con policia */
+        for (f = 0; f < 60 * 200 && n < 2; f++) {
+            PadIn p[MAX_PLAYERS];
+            Race *r = pc_race();
+            Entity *pl = NULL;
+            int k;
+            memset(p, 0, sizeof(p));
+            for (k = 0; k < RACERS; k++) if (r->ent[k].is_player) pl = &r->ent[k];
+            if (pl && !pl->crashed) {
+                CarInput in = race_autopilot(r, pl, 1.0f / 60.0f);
+                p[0].sx = in.steer; p[0].trig_r = in.throttle * 0.75f; p[0].trig_l = in.brake;
+            }
+            game_frame(p, 1.0f / 60.0f);
+            if (pl && f > 60 * 4 && f % 10 == 0)
+                for (k = 0; k < POLICE_MAX; k++) {
+                    Entity *e = &r->ent[POLICE_BASE + k];
+                    V3 fw = v3(sinf(pl->yaw), 0, -cosf(pl->yaw)), dv = vsub(e->pos, pl->pos);
+                    float d = vlen(v3(dv.x, 0, dv.z));
+                    if (e->active && !e->crashed && d > 6 && d < 24 && vdot(dv, fw) > 4.0f) {
+                        char nm[32]; snprintf(nm, sizeof(nm), "n_super%d", n++); shot(nm); f += 200; break;
+                    }
+                }
+        }
+        {   /* palanca C: derecha y abajo (mirar atras) */
+            static const float cxs[2] = {1, 0}, cys[2] = {0, -1};
+            int q;
+            for (q = 0; q < 2; q++) {
+                for (f = 0; f < 40; f++) {
+                    PadIn p[MAX_PLAYERS];
+                    memset(p, 0, sizeof(p));
+                    p[0].trig_r = 0.5f; p[0].cx = cxs[q]; p[0].cy = cys[q];
+                    game_frame(p, 1.0f / 60.0f);
+                }
+                shot(q == 0 ? "n_camC_derecha" : "n_camC_atras");
+            }
+        }
+        game_init();
+        game_frame(none, 1.0f / 60.0f);
+        press(BTN_START, 10); press(BTN_A, 10); press(BTN_A, 10); press(BTN_A, 10);
+        press(BTN_RIGHT, 8); press(BTN_RIGHT, 8); press(BTN_RIGHT, 8); press(0, 20);
+        shot("n_vueltas");
+        printf("capturas patrulla: %d\n", n);
         return 0;
     }
     if (argc > 2 && strcmp(argv[1], "suvfoto") == 0) {

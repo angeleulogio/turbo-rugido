@@ -151,6 +151,11 @@ void race_setup(Race *r, Track *tr, PhysMode mode, int nplayers, const int cars[
     }
     /* patrullas: dos al inicio, mas segun el nivel de busqueda */
     r->police = police;
+    r->laps = RACE_LAPS;
+    r->super_police = 0;
+    for (i = 0; i < nplayers; i++) if (CAR_CLASS[cars[i]] == 'A') r->super_police = 1;
+    r->super_aviso = 0;
+    r->suv_takedowns = 0;
     r->heat = 1;
     r->heat_t = 0;
     r->roadblock_cd = 70.0f;
@@ -159,7 +164,7 @@ void race_setup(Race *r, Track *tr, PhysMode mode, int nplayers, const int cars[
         for (i = 0; i < POLICE_MAX; i++) {
             Entity *e = &r->ent[POLICE_BASE + i];
             e->is_police = 1;
-            e->car = CAR_POLICE;
+            e->car = r->super_police ? CAR_SUPERPOLICE : CAR_POLICE;   /* contra autos clase A: super patrulla */
             e->paint = col(24, 24, 30);
             e->accent = col(245, 245, 250);
             e->active = (i < 2);
@@ -526,7 +531,7 @@ static void kin_step(Race *r, Entity *e, float h) {
     V3 tan;
     if (e->is_police) {
         if (e->roadblock) e->v = approach(e->v, 0, 20.0f * h);
-        else if (e->v < e->skill) e->v += 10.0f * h;
+        else if (e->v < e->skill) e->v += (e->car == CAR_SUPERPOLICE ? 16.0f : (e->is_suv ? 13.0f : 10.0f)) * h;
         else e->v = fmaxf(e->skill, e->v - 14.0f * h);
         if (e->v < 0) e->v = 0;
     } else if (e->is_traffic) {
@@ -619,12 +624,38 @@ static void police_update(Race *r, float dt) {
         if (!t) { e->skill = 0; continue; }
         if (!e->active) {
             e->rb_t -= dt;
-            if (i < want && e->rb_t <= 0) police_spawn_behind(r, e, t, 300.0f + i * 40.0f);
+            if (i < want && e->rb_t <= 0) {
+                police_spawn_behind(r, e, t, 300.0f + i * 40.0f);
+                if (e->car == CAR_SUPERPOLICE && !r->super_aviso) {
+                    for (k = 0; k < r->nplayers; k++) set_msg(r, k, "SUPER PATRULLA!", col(80, 170, 255), 2.5f);
+                    r->super_aviso = 1;
+                }
+            }
             continue;
         }
         if (e->crashed) continue;
         rel = wrap_rel(tr, t->s - e->s);   /* > 0: el objetivo va delante */
         tv = ent_speed(r, t);
+        if (e->car == CAR_SUPERPOLICE && !e->roadblock) {   /* super patrulla: alcanza a cualquier auto clase A */
+            float vc = vcap * 1.12f;
+            if (rel > 35.0f) e->skill = fminf(tv + 7.0f + 2.0f * r->heat + rel * 0.03f, vc);
+            else if (rel > -8.0f) {
+                float gap = vlen(v3(e->pos.x - t->pos.x, 0, e->pos.z - t->pos.z));
+                if (e->lane > 0) e->lane -= dt;
+                else if (gap < 5.5f) e->lane = 1.0f;
+                e->skill = e->lane > 0 ? fmaxf(tv - 3.0f, 0) : fminf(tv + 6.0f, vc);
+            } else e->skill = fmaxf(tv - 8.0f, 0);
+            e->target_d = rel > 35.0f ? r->line[(idx_of(tr, e->s) + 10) % tr->n] : t->d + ((i & 1) ? 1.0f : -1.0f) * (rel < 6.0f ? 1.0f : 0.0f);
+            e->target_d = clampf(e->target_d, -(tr->wall - 1.3f), tr->wall - 1.3f);
+            for (k = 0; k < ENT_MAX; k++) {
+                Entity *o = &r->ent[k];
+                float orel;
+                if (o == e || o == t || !o->active || o->crashed) continue;
+                orel = wrap_rel(tr, o->s - e->s);
+                if (orel > 0 && orel < 24.0f && fabsf(o->d - e->d) < 2.9f) e->target_d = clampf((o->d > 0) ? o->d - 3.6f : o->d + 3.6f, -(tr->wall - 1.3f), tr->wall - 1.3f);
+            }
+            continue;
+        }
         if (e->roadblock) {
             e->rb_t -= dt;
             if (e->rb_t <= 0 || rel > 150.0f) e->roadblock = 0;
@@ -680,24 +711,27 @@ static void police_update(Race *r, float dt) {
                 r->suv_aviso = 1;
             }
             e->rb_t -= dt;
-            if (e->rb_t <= 0 && !t->crashed) police_spawn_behind(r, e, t, 240.0f + (i & 1) * 60.0f);
+            if (e->rb_t <= 0 && !t->crashed) police_spawn_behind(r, e, t, 170.0f + (i & 1) * 50.0f);
             continue;
         }
         if (e->crashed) continue;
         rel = wrap_rel(tr, t->s - e->s);
         tv = ent_speed(r, t);
-        if (rel > 600.0f || rel < -300.0f) { e->active = 0; e->rb_t = 8.0f; continue; }
+        if (rel > 600.0f || rel < -300.0f) { e->active = 0; e->rb_t = 5.0f; continue; }
         gap = vlen(v3(e->pos.x - t->pos.x, 0, e->pos.z - t->pos.z));
         if (e->lane > 0) e->lane -= dt;
-        if (rel > 30.0f) {                      /* alcanzar: mas rapidas que las patrullas */
-            e->skill = fminf(tv + 9.0f + rel * 0.03f, vcap * 1.08f);
+        /* su meta es el takedown: alcanzan muy rapido y embisten a fondo, de lado contra el muro si pueden */
+        if (rel > 25.0f) {
+            e->skill = fminf(tv + 14.0f + rel * 0.04f, vcap * 1.16f);
             e->target_d = t->d;
-        } else if (rel > -10.0f) {              /* embestir: por detras o de costado, directo al jugador */
-            if (gap < 4.5f && e->lane <= 0) e->lane = 0.7f;   /* tras el golpe se separa apenas un momento */
-            e->skill = e->lane > 0 ? fmaxf(tv - 2.0f, 0) : fminf(tv + 7.0f, vcap * 1.10f);
-            e->target_d = t->d + ((fabsf(rel) < 4.0f) ? 0.0f : ((i & 1) ? 0.8f : -0.8f));
-        } else {                                /* se le adelanto: frena para cerrarle el paso */
-            e->skill = fmaxf(tv - 9.0f, 0);
+        } else if (rel > -10.0f) {
+            float lado = (t->d > 0) ? -1.0f : 1.0f;   /* se pone del lado del centro para empujarlo hacia el muro */
+            if (gap < 4.5f && e->lane <= 0) e->lane = 0.35f;
+            e->skill = e->lane > 0 ? fmaxf(tv - 1.0f, 0) : fminf(tv + 10.0f, vcap * 1.16f);
+            if (fabsf(rel) < 5.0f) e->target_d = t->d - lado * 0.2f;   /* de costado: lo empuja hacia afuera */
+            else e->target_d = t->d + lado * ((i & 1) ? 0.9f : 0.4f);   /* por detras: golpe en la esquina trasera */
+        } else {                                /* se le adelanto: frenazo enfrente para que choque */
+            e->skill = fmaxf(tv - 12.0f, 0);
             e->target_d = t->d;
         }
         e->target_d = clampf(e->target_d, -(tr->wall - 1.4f), tr->wall - 1.4f);
@@ -995,9 +1029,25 @@ static void collisions(Race *r) {
                     /* embestida de camioneta: empujon extra hacia afuera del golpe */
                     Entity *pl = a->is_player ? a : b;
                     V3 n = a->is_player ? vscale(best_n, -1.0f) : best_n;   /* de la camioneta hacia el jugador */
-                    if (closing > 5.0f && pl->bump_cool <= 0) {
-                        ent_add(r, pl, vscale(n, 0.45f * closing), v3(0, 0, 0));
-                        set_msg(r, pl->player, "EMBESTIDA!", col(255, 90, 60), 1.0f);
+                    if (closing > 4.0f && pl->bump_cool <= 0 && !pl->crashed) {
+                        PlayerView *pv = &r->view[pl->player];
+                        int contra_muro = fabsf(pl->d) > r->track->wall - 2.4f;
+                        ent_add(r, pl, vscale(n, 0.7f * closing), v3(0, 0, 0));
+                        pv->suv_golpes += closing > 12.0f ? 2 : 1;
+                        pv->suv_golpe_t = 8.0f;
+                        if (pl->invuln <= 0 && (closing > 15.0f || pv->suv_golpes >= 3 || (contra_muro && closing > 7.0f))) {
+                            /* TAKEDOWN: el auto del jugador sale volando y la camioneta se aparta */
+                            V3 vv = vadd(ent_vel(r, pl), vscale(n, 0.9f * closing + 6.0f));
+                            Entity *suv = a->is_suv ? a : b;
+                            crash_start(r, pl, vv);
+                            set_msg(r, pl->player, "TAKEDOWN!", col(255, 40, 40), 3.0f);
+                            pv->suv_golpes = 0;
+                            pv->shake = 1.4f;
+                            suv->lane = 3.0f;
+                            r->suv_takedowns++;
+                        } else {
+                            set_msg(r, pl->player, pv->suv_golpes >= 2 ? "CUIDADO! OTRO Y ES TAKEDOWN" : "EMBESTIDA!", col(255, 90, 60), 1.0f);
+                        }
                     }
                 }
                 if (r->mode != MODE_CHOQUES && (a->is_police || b->is_police) && (a->is_player || b->is_player)) {
@@ -1051,13 +1101,13 @@ static void update_progress(Race *r, Entity *e) {
         e->lap++;
         if (e->is_player) {
             PlayerView *v = &r->view[e->player];
-            if (e->lap >= 2 && e->lap <= RACE_LAPS + 1) {
+            if (e->lap >= 2 && e->lap <= r->laps + 1) {
                 float lt = r->time - v->lap_start;
                 if (v->best_lap <= 0 || lt < v->best_lap) v->best_lap = lt;
             }
             v->lap_start = r->time;
-            if (e->lap == RACE_LAPS) set_msg(r, e->player, "VUELTA FINAL", col(255, 230, 60), 2.0f);
-            else if (e->lap > 1 && e->lap < RACE_LAPS) {
+            if (e->lap == r->laps && r->laps > 1) set_msg(r, e->player, "VUELTA FINAL", col(255, 230, 60), 2.0f);
+            else if (e->lap > 1 && e->lap < r->laps) {
                 char b[32];
                 snprintf(b, sizeof(b), "VUELTA %d", e->lap);
                 set_msg(r, e->player, b, col(255, 255, 255), 1.6f);
@@ -1068,11 +1118,11 @@ static void update_progress(Race *r, Entity *e) {
     }
     e->prev_s = e->s;
     e->progress = e->lap * L + e->s;
-    if (!e->finished && e->lap > RACE_LAPS) {
+    if (!e->finished && e->lap > r->laps) {
         e->finished = 1;
         e->finish_time = r->time;
         e->place = ++r->finish_order;
-        if (e->is_player) set_msg(r, e->player, "META!", col(120, 255, 120), 4.0f);
+        if (e->is_player) { set_msg(r, e->player, "META!", col(120, 255, 120), 4.0f); plat_jingle(); }
     }
 }
 
@@ -1142,13 +1192,20 @@ static void update_camera(Race *r, int p, float dt) {
         if (r->mode == MODE_SIM) desired = vh->yaw + vh->slip * 0.55f;
         else desired = vh->yaw - wrap_angle(vh->yaw - vh->veldir) * 0.55f;
         v->yaw += wrap_angle(desired - v->yaw) * fminf(1.0f, 7.0f * dt);
-        dir = v3(sinf(v->yaw), 0, -cosf(v->yaw));
-        {
-            V3 want_eye = vadd(vsub(e->pos, vscale(dir, dist)), v3(0, hgt, 0));
-            v->eye = vlerp(v->eye, want_eye, fminf(1.0f, 12.0f * dt));
-            v->eye.y = fmaxf(v->eye.y, e->pos.y + 1.4f);
+        {   /* palanca C: la camara gira alrededor del auto hacia donde se empuja (abajo = mirar hacia atras) */
+            float mag = sqrtf(v->cx * v->cx + v->cy * v->cy), want = 0;
+            if (mag > 0.3f) want = -atan2f(v->cx, v->cy);
+            v->orb += wrap_angle(want - v->orb) * fminf(1.0f, 9.0f * dt);
+            if (fabsf(v->orb) < 0.002f && mag <= 0.3f) v->orb = 0;
         }
-        v->target = vadd(vadd(e->pos, vscale(dir, 4.0f)), v3(0, 1.1f, 0));
+        dir = v3(sinf(v->yaw + v->orb), 0, -cosf(v->yaw + v->orb));
+        {
+            float k = clampf(fabsf(v->orb) / 0.6f, 0, 1);   /* al girar, mira al auto en vez de adelante */
+            V3 want_eye = vadd(vsub(e->pos, vscale(dir, dist + k * 1.2f)), v3(0, hgt + k * 0.6f, 0));
+            v->eye = k > 0.05f ? want_eye : vlerp(v->eye, want_eye, fminf(1.0f, 12.0f * dt));
+            v->eye.y = fmaxf(v->eye.y, e->pos.y + 1.4f);
+            v->target = vadd(vadd(e->pos, vscale(dir, 4.0f * (1.0f - k))), v3(0, 1.1f, 0));
+        }
         {
             float want_fov = 60.0f + clampf(fabsf(spd) / top, 0, 1.3f) * 9.0f + (vh->boosting ? 10.0f : 0.0f);
             v->fov = lerpf(v->fov, want_fov, fminf(1, 3 * dt));
@@ -1156,6 +1213,7 @@ static void update_camera(Race *r, int p, float dt) {
     }
     if (v->shake > 0) v->shake = fmaxf(0, v->shake - dt * 1.5f);
     if (v->msg_t > 0) v->msg_t -= dt;
+    if (v->suv_golpe_t > 0) { v->suv_golpe_t -= dt; if (v->suv_golpe_t <= 0) v->suv_golpes = 0; }
 }
 
 void race_camera(Race *r, int p, M34 view, float *fov) {
@@ -1232,6 +1290,8 @@ void race_update(Race *r, const PadIn pads[MAX_PLAYERS], float dt) {
 
     for (p = 0; p < r->nplayers; p++) {
         if (pads[p].pressed & BTN_Z) r->view[p].far_cam = !r->view[p].far_cam;
+        r->view[p].cx = pads[p].cx;
+        r->view[p].cy = pads[p].cy;
     }
 
     if (r->state == RS_COUNTDOWN) {
