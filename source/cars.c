@@ -28,6 +28,13 @@ const CarSpec CAR_SPECS[CAR_COUNT] = {
     {"BELFI V8 69", "MUSCLE CAR DE 1969", 0.72f, 0.95f, 0.40f, 67.5f, 11.0f, 0.94f, 1.20f, 1500, 300000, 1.03f, 0, 0.56f, 17, {30, 40, 110, 255}, {240, 240, 244, 255}},
     /* el carrito de juguete del jugador */
     {"CARRITO", "EL COCHECITO DE JUGUETE", 0.74f, 0.76f, 0.80f, 67.0f, 9.6f, 1.06f, 1.08f, 1250, 210000, 1.08f, 1, 0.60f, 18, {206, 26, 30, 255}, {24, 24, 26, 255}},
+    /* tercera hoja de los hermanos: los dos primeros rinden como el TAURO V10 */
+    {"HALCON R", "FASTBACK CON COLA LEVANTADA", 0.98f, 0.97f, 0.78f, 78.5f, 11.3f, 1.02f, 1.08f, 1300, 390000, 1.10f, 0, 0.48f, 19, {30, 90, 220, 255}, {20, 20, 24, 255}},
+    {"TORNADO V8", "COUPE MUSCLE MODERNO", 0.97f, 1.00f, 0.66f, 78.0f, 11.5f, 0.96f, 1.15f, 1480, 410000, 1.07f, 0, 0.54f, 20, {240, 190, 20, 255}, {20, 20, 24, 255}},
+    {"QUASAR", "SUPERDEPORTIVO DE MOTOR CENTRAL", 0.94f, 0.88f, 0.86f, 76.0f, 10.6f, 1.06f, 1.02f, 1250, 350000, 1.12f, 0, 0.42f, 21, {34, 34, 38, 255}, {240, 120, 20, 255}},
+    /* los autos del trafico, ahora jugables (los mas lentos) */
+    {"SEDAN CIUDAD", "EL SEDAN DEL TRAFICO", 0.40f, 0.45f, 0.62f, 60.0f, 8.0f, 1.00f, 1.05f, 1300, 150000, 1.05f, 1, 0.60f, 100, {120, 140, 170, 255}, {34, 34, 38, 255}},
+    {"FURGONETA", "LA FURGONETA DE REPARTO", 0.30f, 0.35f, 0.40f, 55.0f, 6.8f, 0.90f, 0.90f, 2000, 140000, 1.00f, 0, 0.55f, 101, {236, 236, 236, 255}, {220, 220, 225, 255}},
     /* la patrulla de las persecuciones: pesada y estable, con torreta */
     {"PATRULLA", "INTERCEPTOR DE LA POLICIA", 0.86f, 0.80f, 0.72f, 72.0f, 10.0f, 1.04f, 0.98f, 1520, 290000, 1.10f, 0, 0.52f, 8, {24, 24, 30, 255}, {245, 245, 250, 255}},
 };
@@ -52,7 +59,22 @@ const CarInfo CAR_INFO[CAR_COUNT] = {
     {"V6", "DEPORTIVO DE LOS 50 CON TECHO REDONDO.", "PARACHOQUES CROMADOS Y PINTURA DE DOS TONOS.", "SILUETA DEL HERMANO, DIBUJO DEL JUGADOR"},
     {"V8", "MUSCLE CAR FASTBACK CON COLA LEVANTADA.", "ACELERA FUERTE, PERO CUESTA EN LAS CURVAS.", "SILUETA DEL HERMANO, DIBUJO DEL JUGADOR"},
     {"V6", "EL CARRITO DE JUGUETE DEL ESCRITORIO.", "ROJO, FALDONES NEGROS Y FILETES BLANCOS.", "COPIADO DEL CARRITO DEL JUGADOR"},
+    {"V8 BITURBO", "FASTBACK DE LOS 90 CON COLA LEVANTADA.", "TAN RAPIDO COMO EL TAURO V10.", "DIBUJO DE LOS HERMANOS"},
+    {"V8 COMPRESOR", "COUPE CUADRADO DE DOS PUERTAS.", "EL QUE MAS ACELERA, CON FRANJAS NEGRAS.", "DIBUJO DE LOS HERMANOS"},
+    {"V10 CENTRAL", "CURVAS SUAVES Y TOMAS LATERALES.", "ESCAPES REDONDOS AL CENTRO.", "DIBUJO DE LOS HERMANOS"},
+    {"4 CILINDROS", "EL SEDAN DE LA CIUDAD.", "NO GANA CARRERAS, PERO SE ESCONDE BIEN.", "AUTO DEL TRAFICO"},
+    {"DIESEL", "FURGONETA ALTA DE REPARTO.", "LA MAS LENTA Y PESADA DEL GARAGE.", "AUTO DEL TRAFICO"},
     {"V8 POLICIA", "INTERCEPTOR CON DEFENSA DE EMPUJE.", "EL MISMO AUTO QUE TE PERSIGUE.", "DISENO ORIGINAL DEL JUEGO"},
+};
+
+/* clases: A desde ~74 m/s (266 km/h), B de 69 a 73, C el resto */
+const char CAR_CLASS[CAR_COUNT] = {
+    'B', 'C', 'C', 'A', 'C', 'A', 'C', 'A',      /* FURIA R .. LUTECE V10 */
+    'A', 'C', 'B', 'B', 'B', 'B',                /* TAURO V10, CICLON R, RAYO 4P, LINCE GT, VIENTO SP, T155 */
+    'B', 'C', 'C', 'C',                          /* SIRIO GT, SVSR5, BELFI V8 69, CARRITO */
+    'A', 'A', 'A',                               /* HALCON R, TORNADO V8, QUASAR */
+    'C', 'C',                                    /* SEDAN CIUDAD, FURGONETA */
+    'B'                                          /* PATRULLA */
 };
 
 const Col CAR_ALT_PAINTS[6] = {
@@ -160,6 +182,10 @@ static void stripe(Mesh *m, const Sec *sec, int ns, float hw, Col c) {
 
 void car_build_mesh(Mesh *m, int shape, Col paint, Col accent) {
     Col dark = col(30, 30, 34), glass = col(36, 52, 80);
+    if (shape >= 100) {   /* autos del trafico: misma malla que en la calle */
+        traffic_build_mesh(m, shape - 100, paint);
+        return;
+    }
     if (shape == 8) {
         /* patrulla: carroceria del coupe en negro, puertas blancas y base de la torreta */
         Col white = accent;
@@ -472,6 +498,85 @@ void car_build_mesh(Mesh *m, int shape, Col paint, Col accent) {
         mesh_quad_flat(m, v3(0.40f, 0.56f, 2.205f), v3(0.80f, 0.56f, 2.205f), v3(0.80f, 0.66f, 2.205f), v3(0.40f, 0.66f, 2.205f), col(220, 30, 30));
         wheel(m, -0.86f, -1.42f, 0.34f, 0.26f); wheel(m, 0.86f, -1.42f, 0.34f, 0.26f);
         wheel(m, -0.86f, 1.38f, 0.34f, 0.26f); wheel(m, 0.86f, 1.38f, 0.34f, 0.26f);
+        break;
+    }
+    case 19: { /* HALCON R: fastback de los 90, cola levantada, faros delgados */
+        Sec s[] = {{-2.35f, 0.90f, 0.24f, 0.42f, 0.56f}, {-1.50f, 0.98f, 0.22f, 0.56f, 0.74f}, {0.00f, 0.98f, 0.22f, 0.64f, 0.84f},
+                   {1.50f, 0.98f, 0.24f, 0.68f, 0.88f}, {2.25f, 0.92f, 0.30f, 0.70f, 0.90f}};
+        Col black = col(18, 18, 22), white = col(250, 248, 236), red = col(210, 20, 24);
+        int side;
+        body(m, s, 5, paint, dark);
+        cabin(m, -0.70f, 0.55f, 0.84f, 1.24f, 0.80f, 0.60f, 0.75f, 0.08f, paint, glass);
+        mesh_quad(m, v3(-0.60f, 1.24f, 0.50f), v3(0.60f, 1.24f, 0.50f), v3(0.82f, 0.90f, 2.05f), v3(-0.82f, 0.90f, 2.05f), glass);
+        for (side = -1; side <= 1; side += 2) {
+            mesh_tri(m, v3(side * 0.80f, 0.84f, 0.55f), v3(side * 0.82f, 0.89f, 2.05f), v3(side * 0.60f, 1.24f, 0.50f), paint);
+            /* faros delgados y rectangulares en las esquinas */
+            mesh_quad_flat(m, v3(side * 0.42f, 0.46f, -2.355f), v3(side * 0.86f, 0.46f, -2.355f), v3(side * 0.86f, 0.54f, -2.355f), v3(side * 0.42f, 0.54f, -2.355f), white);
+            /* faros de niebla cuadrados en la defensa */
+            mesh_quad_flat(m, v3(side * 0.45f, 0.28f, -2.365f), v3(side * 0.65f, 0.28f, -2.365f), v3(side * 0.65f, 0.38f, -2.365f), v3(side * 0.45f, 0.38f, -2.365f), white);
+        }
+        mesh_quad_flat(m, v3(-0.88f, 0.26f, -2.36f), v3(0.88f, 0.26f, -2.36f), v3(0.88f, 0.40f, -2.36f), v3(-0.88f, 0.40f, -2.36f), black);
+        /* cola levantada (patito) */
+        mesh_quad(m, v3(-0.84f, 0.90f, 2.02f), v3(0.84f, 0.90f, 2.02f), v3(0.86f, 1.04f, 2.32f), v3(-0.86f, 1.04f, 2.32f), paint);
+        /* barra de pilotos de lado a lado con panel al centro */
+        mesh_quad_flat(m, v3(-0.88f, 0.62f, 2.255f), v3(0.88f, 0.62f, 2.255f), v3(0.88f, 0.76f, 2.255f), v3(-0.88f, 0.76f, 2.255f), red);
+        mesh_quad_flat(m, v3(-0.30f, 0.63f, 2.26f), v3(0.30f, 0.63f, 2.26f), v3(0.30f, 0.75f, 2.26f), v3(-0.30f, 0.75f, 2.26f), black);
+        wheel(m, -0.86f, -1.42f, 0.34f, 0.28f); wheel(m, 0.86f, -1.42f, 0.34f, 0.28f);
+        wheel(m, -0.88f, 1.38f, 0.35f, 0.32f); wheel(m, 0.88f, 1.38f, 0.35f, 0.32f);
+        break;
+    }
+    case 20: { /* TORNADO V8: coupe cuadrado de dos puertas, musculoso, con franjas */
+        Sec s[] = {{-2.45f, 0.94f, 0.28f, 0.60f, 0.80f}, {-1.70f, 1.00f, 0.26f, 0.72f, 0.92f}, {0.20f, 1.00f, 0.26f, 0.76f, 0.98f},
+                   {1.90f, 1.00f, 0.28f, 0.78f, 1.00f}, {2.42f, 0.96f, 0.34f, 0.76f, 0.98f}};
+        Col black = col(16, 16, 20), white = col(250, 248, 236), red = col(210, 20, 24), plata = col(200, 202, 208);
+        int side;
+        body(m, s, 5, paint, dark);
+        stripe(m, s, 5, 0.14f, accent);
+        cabin(m, -0.55f, 1.20f, 0.96f, 1.36f, 0.84f, 0.70f, 0.70f, 0.45f, paint, glass);
+        mesh_box(m, v3(-0.36f, 0.80f, -2.00f), v3(0.36f, 0.94f, -0.70f), paint, paint);   /* joroba del cofre */
+        for (side = -1; side <= 1; side += 2) {
+            /* faros delgados y alargados */
+            mesh_quad_flat(m, v3(side * 0.30f, 0.66f, -2.455f), v3(side * 0.90f, 0.66f, -2.455f), v3(side * 0.90f, 0.74f, -2.455f), v3(side * 0.30f, 0.74f, -2.455f), white);
+            /* pilotos anchos y escapes en las esquinas */
+            mesh_quad_flat(m, v3(side * 0.20f, 0.70f, 2.425f), v3(side * 0.90f, 0.70f, 2.425f), v3(side * 0.90f, 0.82f, 2.425f), v3(side * 0.20f, 0.82f, 2.425f), red);
+            mesh_box(m, v3(side * 0.70f - 0.09f, 0.28f, 2.38f), v3(side * 0.70f + 0.09f, 0.38f, 2.50f), plata, black);
+        }
+        /* parrilla negra ancha con barra plateada al centro */
+        mesh_quad_flat(m, v3(-0.86f, 0.36f, -2.455f), v3(0.86f, 0.36f, -2.455f), v3(0.86f, 0.62f, -2.455f), v3(-0.86f, 0.62f, -2.455f), black);
+        mesh_quad_flat(m, v3(-0.05f, 0.38f, -2.46f), v3(0.05f, 0.38f, -2.46f), v3(0.05f, 0.60f, -2.46f), v3(-0.05f, 0.60f, -2.46f), plata);
+        mesh_box(m, v3(-0.88f, 0.98f, 2.25f), v3(0.88f, 1.04f, 2.42f), paint, paint);   /* labio del maletero */
+        wheel(m, -0.90f, -1.55f, 0.36f, 0.30f); wheel(m, 0.90f, -1.55f, 0.36f, 0.30f);
+        wheel(m, -0.92f, 1.45f, 0.37f, 0.36f); wheel(m, 0.92f, 1.45f, 0.37f, 0.36f);
+        break;
+    }
+    case 21: { /* QUASAR: superdeportivo curvo de motor central, tomas laterales y escapes redondos */
+        Sec s[] = {{-2.30f, 0.88f, 0.18f, 0.36f, 0.44f}, {-1.50f, 0.98f, 0.17f, 0.48f, 0.62f}, {-0.30f, 1.00f, 0.17f, 0.58f, 0.76f},
+                   {1.10f, 1.02f, 0.18f, 0.64f, 0.84f}, {2.25f, 0.96f, 0.24f, 0.62f, 0.82f}};
+        Col black = col(14, 14, 18), white = col(250, 248, 236), red = col(220, 20, 24);
+        int side, k;
+        body(m, s, 5, paint, dark);
+        cabin(m, -0.85f, 0.85f, 0.74f, 1.12f, 0.80f, 0.56f, 0.90f, 0.50f, paint, glass);
+        for (k = 0; k < 4; k++) {   /* rejillas sobre el motor */
+            float z = 1.05f + k * 0.22f;
+            mesh_quad_flat(m, v3(-0.50f, 0.835f, z), v3(0.50f, 0.835f, z), v3(0.50f, 0.835f, z + 0.10f), v3(-0.50f, 0.835f, z + 0.10f), black);
+        }
+        for (side = -1; side <= 1; side += 2) {
+            /* toma lateral larga en diagonal, en el color de acento */
+            mesh_quad_flat(m, v3(side * 1.005f, 0.30f, -0.30f), v3(side * 1.025f, 0.30f, 1.25f), v3(side * 1.025f, 0.56f, 1.05f), v3(side * 1.005f, 0.40f, -0.30f), accent);
+            mesh_quad_flat(m, v3(side * 1.03f, 0.34f, 0.40f), v3(side * 1.03f, 0.34f, 1.15f), v3(side * 1.03f, 0.52f, 1.00f), v3(side * 1.03f, 0.42f, 0.40f), black);
+            /* faros rasgados y faros de niebla redondos abajo */
+            mesh_quad_flat(m, v3(side * 0.40f, 0.36f, -2.305f), v3(side * 0.84f, 0.32f, -2.305f), v3(side * 0.84f, 0.40f, -2.305f), v3(side * 0.40f, 0.44f, -2.305f), white);
+            mesh_box(m, v3(side * 0.62f - 0.07f, 0.21f, -2.36f), v3(side * 0.62f + 0.07f, 0.29f, -2.29f), white, white);
+            /* pilotos escalonados */
+            mesh_quad_flat(m, v3(side * 0.30f, 0.62f, 2.255f), v3(side * 0.62f, 0.62f, 2.255f), v3(side * 0.62f, 0.70f, 2.255f), v3(side * 0.30f, 0.70f, 2.255f), red);
+            mesh_quad_flat(m, v3(side * 0.62f, 0.56f, 2.255f), v3(side * 0.90f, 0.56f, 2.255f), v3(side * 0.90f, 0.66f, 2.255f), v3(side * 0.62f, 0.66f, 2.255f), red);
+            /* dos escapes redondos al centro */
+            mesh_box(m, v3(side * 0.16f - 0.09f, 0.22f, 2.22f), v3(side * 0.16f + 0.09f, 0.38f, 2.32f), col(180, 182, 188), black);
+        }
+        /* toma en V al centro del frente */
+        mesh_tri_flat(m, v3(-0.30f, 0.43f, -2.31f), v3(0.30f, 0.43f, -2.31f), v3(0.0f, 0.26f, -2.31f), black);
+        wheel(m, -0.88f, -1.40f, 0.34f, 0.28f); wheel(m, 0.88f, -1.40f, 0.34f, 0.28f);
+        wheel(m, -0.92f, 1.40f, 0.36f, 0.36f); wheel(m, 0.92f, 1.40f, 0.36f, 0.36f);
         break;
     }
     case 4: { /* sedan deportivo de 4 puertas (dibujo del hermano) */

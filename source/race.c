@@ -1,6 +1,7 @@
 /* race.c - logica de carrera: IA, trafico, colisiones, choques, vueltas, camara */
 #include <stdio.h>
 #include "race.h"
+#include "cars.h"
 
 static void update_places(Race *r);
 static unsigned rng_cheap(const Entity *e) { return (unsigned)((e->s * 7.0f) + (e->pos.x * 3.0f)) ^ 0x5bd1u; }
@@ -90,12 +91,15 @@ void race_setup(Race *r, Track *tr, PhysMode mode, int nplayers, const int cars[
             e->car = cars[e->player];
         } else {
             /* elegir un auto de IA distinto a los de los jugadores si es posible */
+            /* rivales de la misma clase que el auto del jugador 1 (si alcanzan), distintos a los de los jugadores */
             int tries = 0;
+            char clase = CAR_CLASS[cars[0]];
             do {
                 e->car = ai_car % (CAR_COUNT - 1);   /* la patrulla no corre como rival */
                 ai_car++;
                 tries++;
-            } while (tries < CAR_COUNT - 1 && es_auto_de_jugador(cars, nplayers, e->car));
+            } while (tries < 3 * CAR_COUNT &&
+                     (es_auto_de_jugador(cars, nplayers, e->car) || (tries < 2 * CAR_COUNT && CAR_CLASS[e->car] != clase)));
             e->skill = 0.91f + 0.025f * i;
         }
         e->paint = CAR_SPECS[e->car].paint;

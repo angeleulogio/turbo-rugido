@@ -300,7 +300,10 @@ static void menu_background(int car, float ypos) {
     Viewport vp = {0, 0, SCREEN_W, SCREEN_H};
     M34 view, model;
     plat_sky(&vp, col(20, 24, 70), col(200, 90, 60));
-    m34_lookat(view, v3(0, 2.4f, 7.5f), v3(0, 1, 0), v3(0, 0.6f, 0));
+    {   /* los autos del trafico (furgoneta) son mas grandes: alejar la camara */
+        float k = CAR_SPECS[car].shape >= 100 ? 1.4f : 1.0f;
+        m34_lookat(view, v3(0, 2.4f * k, 7.5f * k), v3(0, 1, 0), v3(0, 0.6f * k, 0));
+    }
     plat_view_begin(&vp, 45.0f, 0.5f, 100.0f, view, col(200, 90, 60), 60.0f, 90.0f);
     {
         M34 t;
@@ -650,8 +653,11 @@ static void garage_screen(unsigned n0, unsigned pr0) {
 
     /* auto en el centro, en un piso de exhibicion, con camara que lo rodea */
     plat_sky(&vp, col(30, 34, 46), col(96, 100, 112));
-    d = 7.2f * G.g_zoom;
-    m34_lookat(view, v3(sinf(G.g_yaw) * d, 1.2f + 1.1f * G.g_zoom, cosf(G.g_yaw) * d), v3(0, 1, 0), v3(0, 0.25f, 0));
+    {   /* los autos del trafico (furgoneta) son mas grandes: alejar la camara */
+        float k = CAR_SPECS[G.g_car].shape >= 100 ? 1.45f : 1.0f;
+        d = 7.2f * G.g_zoom * k;
+        m34_lookat(view, v3(sinf(G.g_yaw) * d, (1.2f + 1.1f * G.g_zoom) * k, cosf(G.g_yaw) * d), v3(0, 1, 0), v3(0, 0.25f + 0.6f * (k - 1.0f), 0));
+    }
     plat_view_begin(&vp, 42.0f, 0.3f, 100.0f, view, col(96, 100, 112), 60.0f, 90.0f);
     {
         M34 t;
@@ -665,7 +671,7 @@ static void garage_screen(unsigned n0, unsigned pr0) {
 
     plat_2d_begin();
     text_draw(16, 14, "GARAGE", 3, YELLOW);
-    snprintf(b, sizeof(b), "%d/%d", G.g_car + 1, CAR_COUNT);
+    snprintf(b, sizeof(b), "CLASE %c  %d/%d", CAR_CLASS[G.g_car], G.g_car + 1, CAR_COUNT);
     text_draw_right(SCREEN_W - 16, 14, b, 3, WHITE);
     text_draw_center(SCREEN_W / 2, 46, sp->name, 4, WHITE);
     text_draw_center(SCREEN_W / 2, 84, sp->desc, 2, GREY);
@@ -811,6 +817,14 @@ void game_frame(const PadIn pads[MAX_PLAYERS], float dt) {
         plat_2d_begin();
         snprintf(b, sizeof(b), "AUTO - JUGADOR %d", cp + 1);
         text_draw_center(SCREEN_W / 2, 30, b, 3, YELLOW);
+        {   /* clase del auto: arriba/abajo cambian de clase */
+            char cl = CAR_CLASS[G.sel];
+            Col cc = cl == 'A' ? col(255, 80, 80) : (cl == 'B' ? col(255, 200, 60) : col(120, 220, 120));
+            snprintf(b, sizeof(b), "CLASE %c", cl);
+            plat_rect(SCREEN_W - 132, 8, 124, 46, cola(0, 0, 0, 170));
+            text_draw_center(SCREEN_W - 70, 13, b, 2.5f, cc);
+            text_draw_center(SCREEN_W - 70, 40, "ARRIBA/ABAJO", 1.2f, GREY);
+        }
         text_draw_center(SCREEN_W / 2, 70, sp->name, 4, WHITE);
         text_draw_center(SCREEN_W / 2, 108, sp->desc, 2, GREY);
         text_draw(30, 220, "<", 5, WHITE);
@@ -828,8 +842,20 @@ void game_frame(const PadIn pads[MAX_PLAYERS], float dt) {
             text_draw_center(SCREEN_W / 2, 452, "X: CAMBIAR PINTURA", 1.5f, GREY);
             if (pp & BTN_X) { G.paint[cp] = (G.paint[cp] + 1) % 7; plat_sfx(SFX_SELECT); }
         }
-        if (nn & BTN_LEFT) { G.sel = (G.sel + CAR_COUNT - 1) % CAR_COUNT; plat_sfx(SFX_SELECT); }
-        if (nn & BTN_RIGHT) { G.sel = (G.sel + 1) % CAR_COUNT; plat_sfx(SFX_SELECT); }
+        /* izquierda/derecha: autos de la misma clase; arriba/abajo: otra clase (C, B, A) */
+        if (nn & (BTN_LEFT | BTN_RIGHT)) {
+            int dir = (nn & BTN_LEFT) ? CAR_COUNT - 1 : 1, k = G.sel;
+            do k = (k + dir) % CAR_COUNT; while (CAR_CLASS[k] != CAR_CLASS[G.sel] && k != G.sel);
+            G.sel = k;
+            plat_sfx(SFX_SELECT);
+        }
+        if (nn & (BTN_UP | BTN_DOWN)) {
+            static const char orden[3] = {'C', 'B', 'A'};
+            int ci = CAR_CLASS[G.sel] == 'C' ? 0 : (CAR_CLASS[G.sel] == 'B' ? 1 : 2), k;
+            ci = (ci + ((nn & BTN_UP) ? 1 : 2)) % 3;
+            for (k = 0; k < CAR_COUNT; k++) if (CAR_CLASS[k] == orden[ci]) { G.sel = k; break; }
+            plat_sfx(SFX_SELECT);
+        }
         preview_paint(G.sel, G.paint[cp]);
         if (pp & BTN_A) {
             G.cars[cp] = G.sel;

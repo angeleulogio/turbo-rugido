@@ -233,6 +233,18 @@ int main(int argc, char **argv) {
         press(BTN_RIGHT, 6); press(BTN_RIGHT, 6); press(BTN_X, 30); shot("m02_pintura");
         return 0;
     }
+    if (argc > 1 && strcmp(argv[1], "clases") == 0) {
+        int q;
+        game_init();
+        game_frame(none, 1.0f / 60.0f);
+        press(BTN_START, 10); press(BTN_A, 10); press(BTN_A, 10); press(BTN_A, 10); press(BTN_A, 10);
+        shot("k01_claseB");
+        press(BTN_UP, 6); for (q = 0; q < 5; q++) press(BTN_RIGHT, 6);
+        press(0, 30); shot("k02_claseA");
+        press(BTN_UP, 6); for (q = 0; q < 7; q++) press(BTN_RIGHT, 6);
+        press(0, 30); shot("k03_claseC");
+        return 0;
+    }
     if (argc > 1 && strcmp(argv[1], "garage") == 0) {
         int q;
         game_init();
