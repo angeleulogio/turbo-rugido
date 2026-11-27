@@ -4,8 +4,8 @@
 
 #include "core.h"
 
-#define CAR_COUNT 25
-#define CAR_POLICE 24
+#define CAR_COUNT 44
+#define CAR_POLICE 43
 #define CAR_SUPERPOLICE CAR_COUNT   /* super patrulla: solo persigue a los autos clase A, no es seleccionable */  /* la patrulla (siempre la ultima): jugable y usada por la policia */
 
 typedef struct {

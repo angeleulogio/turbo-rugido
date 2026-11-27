@@ -306,7 +306,7 @@ static void menu_background(int car, float ypos) {
     M34 view, model;
     plat_sky(&vp, col(20, 24, 70), col(200, 90, 60));
     {   /* los autos del trafico (furgoneta) son mas grandes: alejar la camara */
-        float k = CAR_SPECS[car].shape >= 100 ? 1.4f : 1.0f;
+        float k = (CAR_SPECS[car].shape >= 100 || CAR_SPECS[car].shape == 28 || CAR_SPECS[car].shape == 42) ? 1.4f : 1.0f;
         m34_lookat(view, v3(0, 2.4f * k, 7.5f * k), v3(0, 1, 0), v3(0, 0.6f * k, 0));
     }
     plat_view_begin(&vp, 45.0f, 0.5f, 100.0f, view, col(200, 90, 60), 60.0f, 90.0f);
@@ -659,7 +659,7 @@ static void garage_screen(unsigned n0, unsigned pr0) {
     /* auto en el centro, en un piso de exhibicion, con camara que lo rodea */
     plat_sky(&vp, col(30, 34, 46), col(96, 100, 112));
     {   /* los autos del trafico (furgoneta) son mas grandes: alejar la camara */
-        float k = CAR_SPECS[G.g_car].shape >= 100 ? 1.45f : 1.0f;
+        float k = (CAR_SPECS[G.g_car].shape >= 100 || CAR_SPECS[G.g_car].shape == 28 || CAR_SPECS[G.g_car].shape == 42) ? 1.45f : 1.0f;
         d = 7.2f * G.g_zoom * k;
         m34_lookat(view, v3(sinf(G.g_yaw) * d, (1.2f + 1.1f * G.g_zoom) * k, cosf(G.g_yaw) * d), v3(0, 1, 0), v3(0, 0.25f + 0.6f * (k - 1.0f), 0));
     }

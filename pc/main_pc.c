@@ -72,7 +72,11 @@ static void sim_test(int trk, int mode, int car) {
             }
             { int q; for (q = POLICE_BASE; q < ENT_MAX; q++) { if (r.ent[q].roadblock && r.ent[q].rb_t > 29.98f) rb++; if (r.ent[q].crashed && r.ent[q].crash_t < 0.02f && r.ent[q].crash_t > 0) pcrash++; } }
         }
-        if (pl->veh.wall_impact > 3.0f) { walls++; if (getenv("MUROS_DBG")) printf("muro idx=%d imp=%.1f\n", track_locate(&tr, pl->pos, -1).idx, pl->veh.wall_impact); }
+        if (pl->veh.wall_impact > 3.0f && !pl->crashed) { walls++; if (getenv("MUROS_DBG")) {
+            TrackPos tp = track_locate(&tr, pl->pos, -1); int q, qb = -1; float bd = 1e9f;
+            for (q = 0; q < ENT_MAX; q++) { Entity *e = &r.ent[q]; float dd; if (e == pl || !e->active) continue; dd = vlen(vsub(e->pos, pl->pos)); if (dd < bd) { bd = dd; qb = q; } }
+            printf("muro t=%.1f idx=%d d=%.1f imp=%.1f v=%.1f cerca=%d(%.1fm pol=%d rb=%d suv=%d cr=%d)\n", r.time, tp.idx, tp.d, pl->veh.wall_impact, pl->veh.speed, qb, bd, qb >= 0 ? r.ent[qb].is_police : 0, qb >= 0 ? r.ent[qb].roadblock : 0, qb >= 0 ? r.ent[qb].is_suv : 0, pl->crashed);
+        } }
         {
             float sp = mode == MODE_SIM ? pl->veh.vf : pl->veh.speed;
             if (sp > maxspd) maxspd = sp;

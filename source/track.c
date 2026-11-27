@@ -8,7 +8,7 @@ static V3 raw[RAW_MAX];
 static int nraw;
 
 static const char *NAMES[TRACK_COUNT] = { "CIRCUITO OCHO", "FORTALEZA AZUL", "VALLE DEL TUNEL", "BURGOS", "MONTE FUJI", "CASTELLOLI", "SUPEROVALO", "COSTA ALTA", "PARQUE TUCAN",
-    "DESIERTO SONORA", "SELVA MAYA", "LOS VOLCANES", "CAMPOS DE AGAVE", "BAJA CALIFORNIA", "CUMBRES NEVADAS", "PARQUE FUNDIDORA", "VILLA OLIMPICA", "PARQUE ACUATICO", "EL SEMINARIO", "ISLA DEL SOL", "ESPINAZO", "CAMPOS DEL TREN", "BOSQUE DENSO", "SANTIAGO", "LAGO PESCADORES", "PARQUE LAGO", "RIO LA SILLA", "PLAZA PLUTARCO", "LAGO CANTERA", "SAN AGUSTIN", "EL JABALI", "LAGO FUNDIDORA", "CABO DE HORNOS", "NINOS HEROES", "SAN MIGUEL ALLENDE", "CIUDAD VIOLETA", "VALLE NEVADO", "COMPLEJO QUIMICO", "PATZCUARO", "CIUDAD DESIERTO", "CIRCUITO RETRO", "MORELIA", "PLANETA ESMERALDA", "COLINA NAVIDENA", "MONTANAS CAPSULA", "TOUGE MIYAGI" };
+    "DESIERTO SONORA", "SELVA MAYA", "LOS VOLCANES", "CAMPOS DE AGAVE", "BAJA CALIFORNIA", "CUMBRES NEVADAS", "PARQUE FUNDIDORA", "VILLA OLIMPICA", "PARQUE ACUATICO", "EL SEMINARIO", "ISLA DEL SOL", "ESPINAZO", "CAMPOS DEL TREN", "BOSQUE DENSO", "SANTIAGO", "LAGO PESCADORES", "PARQUE LAGO", "RIO LA SILLA", "PLAZA PLUTARCO", "LAGO CANTERA", "SAN AGUSTIN", "EL JABALI", "LAGO FUNDIDORA", "CABO DE HORNOS", "NINOS HEROES", "SAN MIGUEL ALLENDE", "CIUDAD VIOLETA", "VALLE NEVADO", "COMPLEJO QUIMICO", "PATZCUARO", "CIUDAD DESIERTO", "CIRCUITO RETRO", "MORELIA", "PLANETA ESMERALDA", "COLINA NAVIDENA", "MONTANAS CAPSULA", "TOUGE MIYAGI", "ISLA DRAGON" };
 
 const char *track_name(int id) { return (id >= 0 && id < TRACK_COUNT) ? NAMES[id] : "?"; }
 
@@ -1607,6 +1607,176 @@ static const float SUGO_CP[][3] = {
     {-118, 163, 28.9},
     {-140, 161, 29.0},
     {-162, 159, 29.1}
+};
+
+/* Isla Dragon: silueta original de un dragon de perfil (cola, ala, cabeza con cuernos y dos patas) */
+static const float DRAGON_CP[][3] = {
+    {182, 136, 14.1},
+    {204, 137, 14.6},
+    {226, 141, 14.9},
+    {244, 153, 15.1},
+    {255, 172, 15.3},
+    {263, 193, 15.3},
+    {270, 214, 15.1},
+    {276, 235, 14.9},
+    {283, 255, 14.6},
+    {299, 271, 14.3},
+    {319, 279, 13.9},
+    {341, 280, 13.4},
+    {363, 277, 13.0},
+    {384, 270, 12.5},
+    {402, 257, 12.1},
+    {414, 239, 11.7},
+    {417, 217, 11.4},
+    {410, 197, 11.1},
+    {400, 177, 10.9},
+    {391, 157, 10.8},
+    {385, 136, 10.7},
+    {380, 114, 10.7},
+    {374, 93, 10.8},
+    {367, 72, 11.0},
+    {359, 52, 11.2},
+    {350, 31, 11.4},
+    {343, 11, 11.6},
+    {337, -11, 11.9},
+    {334, -32, 12.1},
+    {332, -54, 12.3},
+    {333, -76, 12.4},
+    {337, -98, 12.5},
+    {343, -119, 12.5},
+    {351, -140, 12.4},
+    {363, -158, 12.2},
+    {378, -175, 11.9},
+    {395, -189, 11.4},
+    {414, -200, 10.9},
+    {435, -208, 10.3},
+    {456, -213, 9.6},
+    {478, -217, 8.9},
+    {499, -220, 8.1},
+    {521, -223, 7.2},
+    {542, -231, 6.4},
+    {558, -245, 5.5},
+    {565, -266, 4.7},
+    {558, -287, 4.0},
+    {544, -303, 3.3},
+    {526, -316, 2.6},
+    {507, -327, 2.1},
+    {487, -336, 1.7},
+    {466, -343, 1.5},
+    {445, -349, 1.3},
+    {423, -353, 1.3},
+    {401, -357, 1.4},
+    {380, -361, 1.7},
+    {358, -366, 2.0},
+    {337, -372, 2.5},
+    {316, -367, 3.0},
+    {299, -353, 3.6},
+    {285, -336, 4.3},
+    {271, -318, 4.9},
+    {259, -300, 5.6},
+    {248, -281, 6.3},
+    {236, -262, 7.0},
+    {225, -243, 7.6},
+    {214, -224, 8.1},
+    {202, -205, 8.6},
+    {189, -188, 8.9},
+    {174, -172, 9.2},
+    {155, -161, 9.4},
+    {141, -177, 9.6},
+    {136, -198, 9.6},
+    {130, -219, 9.6},
+    {123, -240, 9.5},
+    {115, -261, 9.4},
+    {104, -280, 9.2},
+    {88, -295, 9.0},
+    {70, -307, 8.9},
+    {49, -315, 8.7},
+    {28, -321, 8.6},
+    {7, -328, 8.6},
+    {-14, -335, 8.6},
+    {-35, -343, 8.7},
+    {-56, -344, 8.9},
+    {-74, -332, 9.1},
+    {-88, -315, 9.5},
+    {-99, -296, 9.9},
+    {-108, -276, 10.4},
+    {-118, -256, 11.0},
+    {-127, -236, 11.6},
+    {-136, -216, 12.2},
+    {-145, -196, 12.9},
+    {-154, -175, 13.6},
+    {-164, -156, 14.2},
+    {-177, -138, 14.8},
+    {-194, -124, 15.4},
+    {-213, -113, 15.9},
+    {-234, -107, 16.2},
+    {-256, -102, 16.5},
+    {-278, -101, 16.6},
+    {-300, -101, 16.6},
+    {-322, -104, 16.5},
+    {-344, -106, 16.3},
+    {-366, -108, 15.9},
+    {-388, -108, 15.4},
+    {-410, -106, 14.8},
+    {-432, -104, 14.1},
+    {-453, -100, 13.4},
+    {-475, -95, 12.6},
+    {-496, -87, 11.7},
+    {-516, -78, 10.9},
+    {-535, -67, 10.0},
+    {-551, -53, 9.2},
+    {-560, -33, 8.4},
+    {-554, -12, 7.7},
+    {-540, 5, 7.1},
+    {-523, 19, 6.5},
+    {-504, 30, 6.1},
+    {-483, 37, 5.7},
+    {-462, 44, 5.5},
+    {-441, 51, 5.4},
+    {-420, 57, 5.3},
+    {-399, 63, 5.4},
+    {-377, 69, 5.5},
+    {-356, 75, 5.7},
+    {-335, 82, 5.9},
+    {-314, 88, 6.1},
+    {-293, 95, 6.4},
+    {-272, 102, 6.6},
+    {-252, 110, 6.9},
+    {-231, 118, 7.0},
+    {-211, 128, 7.2},
+    {-192, 138, 7.2},
+    {-173, 150, 7.2},
+    {-157, 165, 7.1},
+    {-144, 183, 6.9},
+    {-136, 203, 6.7},
+    {-132, 225, 6.4},
+    {-128, 247, 6.0},
+    {-124, 268, 5.6},
+    {-120, 290, 5.2},
+    {-115, 311, 4.8},
+    {-109, 333, 4.3},
+    {-99, 352, 3.9},
+    {-84, 368, 3.6},
+    {-64, 377, 3.3},
+    {-42, 378, 3.0},
+    {-20, 375, 2.9},
+    {1, 367, 2.9},
+    {18, 354, 3.0},
+    {29, 335, 3.2},
+    {32, 313, 3.5},
+    {29, 292, 3.9},
+    {21, 271, 4.5},
+    {16, 250, 5.1},
+    {14, 228, 5.9},
+    {15, 206, 6.7},
+    {21, 185, 7.6},
+    {34, 166, 8.5},
+    {52, 154, 9.4},
+    {73, 148, 10.3},
+    {95, 145, 11.2},
+    {116, 142, 12.1},
+    {138, 140, 12.8},
+    {160, 138, 13.5}
 };
 
 /* Cabo de Hornos: vuelta a la isla por encima de los acantilados, subiendo al cerro y bajando al mar (x, z, altura) */
@@ -4479,6 +4649,17 @@ static float sugo_h(const Track *tr, float x, float z, float d) {
     return lerpf(g, SUGO_LEJOS, smooth01((r - (tr->extent + 220.0f)) / 230.0f));
 }
 
+/* Isla Dragon: isla verde con un cerrito al centro; pasando la orilla, playa que baja al mar */
+static float isla_dragon_h(const Track *tr, float x, float z, float d) {
+    float g = cap_idw(tr, x, z) - 0.3f + 1.2f * sinf(x * 0.035f) * cosf(z * 0.031f) * smooth01((d - 15.0f) / 30.0f);
+    if (inside_loop(tr, x, z)) g += 7.0f * smooth01((d - 30.0f) / 90.0f);
+    else {
+        float u = d - (tr->wall + 50.0f);
+        if (u > 0) g = lerpf(g, -7.0f, smooth01(u / 55.0f));
+    }
+    return g;
+}
+
 static float terrain_h(const Track *tr, float x, float z) {
     int ni;
     float d = min_dist_xz(tr, v3(x, 0, z), &ni);
@@ -4495,6 +4676,7 @@ static float terrain_h(const Track *tr, float x, float z) {
     if (tr->terrain == 9) return lerpf(ty, navidad_h(tr, x, z), smooth01((d - tr->wall - 3.0f) / 35.0f));
     if (tr->terrain == 10) return lerpf(ty, cap_h(tr, x, z, d), smooth01((d - tr->wall - 3.0f) / 30.0f));
     if (tr->terrain == 11) return lerpf(ty, sugo_h(tr, x, z, d), smooth01((d - tr->wall - 3.0f) / 30.0f));
+    if (tr->terrain == 12) return lerpf(ty, isla_dragon_h(tr, x, z, d), smooth01((d - tr->wall - 3.0f) / 30.0f));
     if (tr->terrain == 5) {
         /* Cabo de Hornos: adentro cerros de hasta 34 m sobre el camino; afuera una franja de tundra
            y luego el acantilado que cae al mar (nivel 0) */
@@ -4530,6 +4712,11 @@ static Col (*g_terreno_col)(float x, float z, int alt) = NULL;
 static Col terrain_col(const Track *tr, float h, int alt) {
     float t;
     if (tr->terrain == 9) return alt ? col(240, 244, 252) : col(230, 236, 248);   /* todo nieve */
+    if (tr->terrain == 12) {   /* pasto tropical; arena junto al mar */
+        if (h < 0.2f) return alt ? col(196, 180, 130) : col(188, 172, 124);
+        if (h < 2.2f) return alt ? col(236, 220, 164) : col(228, 212, 156);
+        return alt ? col(98, 182, 74) : col(90, 172, 68);
+    }
     if (tr->terrain == 10) {   /* cima celeste; la orilla y la pared de la capsula mas azules hacia abajo */
         if (h > 18.0f) return alt ? col(176, 222, 248) : col(164, 212, 244);
         if (h > -60.0f) return alt ? col(132, 190, 238) : col(122, 182, 234);
@@ -4579,6 +4766,7 @@ static void build_world_terrain(Track *tr) {
             dc = min_dist_xz(tr, v3(x0 + T * 0.5f, 0, z0 + T * 0.5f), &ci);
             if (tr->terrain == 5 && dc > 250.0f + T * 0.75f && !inside_loop(tr, x0 + T * 0.5f, z0 + T * 0.5f)) continue;   /* mar abierto */
             if (tr->terrain == 10 && cap_borde(x0 + T * 0.5f, z0 + T * 0.5f) > 55.0f + T * 0.71f) continue;   /* vacio bajo las nubes */
+            if (tr->terrain == 12 && dc > tr->wall + 115.0f + T * 0.71f && !inside_loop(tr, x0 + T * 0.5f, z0 + T * 0.5f)) continue;   /* mar abierto */
             if (tr->terrain == 4 && dc > tr->wall + 55.0f + T * 0.75f && !inside_loop(tr, x0 + T * 0.5f, z0 + T * 0.5f)) {
                 /* meseta exterior plana, coloreada por el mapa en celdas de 25 m */
                 int a, b;
@@ -4598,7 +4786,8 @@ static void build_world_terrain(Track *tr) {
                             : (tr->terrain == 6 && dc > tr->wall + 60.0f + T * 0.75f) ? 4
                             : ((tr->terrain == 7 || tr->terrain == 8 || tr->terrain == 9) && dc > tr->wall + 12.0f + T * 0.75f) ? (tr->terrain == 9 ? 3 : 4)
                             : (tr->terrain == 10 && dc > tr->wall + 30.0f + T * 0.75f && cap_borde(x0 + T * 0.5f, z0 + T * 0.5f) > 70.0f + T * 0.71f) ? 5
-                            : (tr->terrain == 11) ? ((dc > tr->wall + 50.0f + T * 0.75f) ? 4 : 8) : ((tr->terrain == 6 || tr->terrain == 9) ? 7 : 10);
+                            : (tr->terrain == 11) ? ((dc > tr->wall + 50.0f + T * 0.75f) ? 4 : 8)
+                            : (tr->terrain == 12) ? ((dc > tr->wall + 30.0f + T * 0.75f) ? 5 : 8) : ((tr->terrain == 6 || tr->terrain == 9) ? 7 : 10);
                 float hs[21][21];
                 int a, b;
                 float st = T / K;
@@ -4612,6 +4801,7 @@ static void build_world_terrain(Track *tr) {
                         int ni;
                         min_dist_xz(tr, v3(px + st * 0.5f, 0, pz + st * 0.5f), &ni);
                         if (tr->terrain == 4 && inside_loop(tr, px + st * 0.5f, pz + st * 0.5f) && hm < CANT_AGUA - 1.0f) continue;   /* bajo el agua */
+                        if (tr->terrain == 12 && hs[a][b] < -5 && hs[a + 1][b] < -5 && hs[a + 1][b + 1] < -5 && hs[a][b + 1] < -5) continue;   /* bajo el mar */
                         if (tr->terrain == 10 && hs[a][b] <= CAP_ABISMO + 1 && hs[a + 1][b] <= CAP_ABISMO + 1 && hs[a + 1][b + 1] <= CAP_ABISMO + 1 && hs[a][b + 1] <= CAP_ABISMO + 1) continue;
                         if ((tr->terrain == 5 || tr->terrain == 8) && hs[a][b] < -1 && hs[a + 1][b] < -1 && hs[a + 1][b + 1] < -1 && hs[a][b + 1] < -1) continue;   /* bajo el agua */
                         mesh_quad(chunk_mesh(tr, ni), p00, p10, p11, p01,
@@ -10273,6 +10463,148 @@ static void scenery_sugo(Track *tr) {
     }
 }
 
+/* ---------- Isla Dragon: isla tropical con la estatua de un dragon de jade ---------- */
+
+/* dragon de piedra jade (diseno original): el cuerpo sale del pasto en tres arcos, cabeza con cuernos y punta de cola */
+static void dragon_jade(Mesh *m, V3 c, V3 f, float s) {
+    V3 r = v3(-f.z, 0, f.x);
+    Col jade = col(58, 150, 112), jade2 = col(44, 128, 96), oro = col(226, 182, 60), ojo = col(250, 220, 60), negro = col(20, 20, 24);
+    int a, k;
+    for (a = 0; a < 3; a++) {   /* tres arcos del cuerpo */
+        float zc = (-1.0f + a) * 13.0f * s, R = (6.0f - a * 0.8f) * s, th = (2.2f - a * 0.3f) * s;
+        for (k = 0; k < 8; k++) {
+            float t0 = (float)M_PI * k / 8, t1 = (float)M_PI * (k + 1) / 8, tm = (t0 + t1) * 0.5f;
+            V3 p = lp(c, r, f, 0, sinf(tm) * R - th * 0.5f, zc + cosf(tm) * R);
+            mesh_obox(m, p, r, f, th * 0.6f, R * 0.42f, th, (k & 1) ? jade : jade2, jade);
+            if (k > 0 && k < 7) mesh_cone(m, vadd(p, v3(0, th, 0)), th * 0.35f, th * 0.9f, 4, oro);   /* espinas doradas */
+        }
+    }
+    /* cuello que sube y cabeza */
+    {
+        V3 cu = lp(c, r, f, 0, 0, -21.0f * s), ca = lp(c, r, f, 0, 9.0f * s, -24.0f * s);
+        int q;
+        for (q = 0; q < 5; q++) {
+            V3 p = vlerp(cu, ca, q / 5.0f);
+            mesh_obox(m, p, r, f, 1.9f * s, 1.9f * s, 2.2f * s, jade, jade);
+        }
+        mesh_obox(m, ca, r, f, 2.4f * s, 3.2f * s, 3.0f * s, jade, jade);   /* cabeza */
+        mesh_obox(m, lp(ca, r, f, 0, 0.2f * s, -3.8f * s), r, f, 1.6f * s, 1.8f * s, 1.8f * s, jade2, jade2);   /* hocico */
+        for (k = -1; k <= 1; k += 2) {
+            mesh_cone(m, lp(ca, r, f, k * 1.3f * s, 3.0f * s, 1.6f * s), 0.5f * s, 3.4f * s, 4, oro);   /* cuernos */
+            mesh_obox(m, lp(ca, r, f, k * 2.42f * s, 1.8f * s, -1.4f * s), r, f, 0.06f * s, 0.5f * s, 0.5f * s, ojo, ojo);   /* ojos */
+            mesh_obox(m, lp(ca, r, f, k * 0.7f * s, 1.2f * s, -5.62f * s), r, f, 0.25f * s, 0.05f * s, 0.25f * s, negro, negro);   /* narices */
+        }
+        mesh_obox(m, lp(ca, r, f, 0, 3.0f * s, 0), r, f, 0.3f * s, 2.6f * s, 1.4f * s, oro, oro);   /* cresta */
+    }
+    /* punta de la cola que sale del pasto */
+    mesh_cone(m, lp(c, r, f, 0, -0.5f * s, 23.0f * s), 1.8f * s, 5.0f * s, 5, jade);
+    mesh_cone(m, lp(c, r, f, 0, 4.2f * s, 23.0f * s), 1.2f * s, 2.2f * s, 4, oro);
+}
+
+static void sombrilla(Mesh *m, V3 p, Col c) {
+    mesh_prism(m, p, 0.06f, 2.6f, 4, col(230, 230, 230), col(230, 230, 230));
+    mesh_cone(m, vadd(p, v3(0, 2.2f, 0)), 1.6f, 0.7f, 6, c);
+}
+
+static void farol_rojo(Mesh *m, V3 p) {
+    mesh_prism(m, p, 0.12f, 4.2f, 4, col(60, 40, 30), col(60, 40, 30));
+    mesh_box(m, vadd(p, v3(-0.38f, 3.2f, -0.38f)), vadd(p, v3(0.38f, 4.0f, 0.38f)), col(220, 40, 36), col(240, 190, 60));
+}
+
+static void cielo_dragon(Track *tr) {
+    Mesh *m = &tr->world;
+    Rng rg = {4601};
+    int k;
+    V3 c = tr->center;
+    float R = 6000.0f;
+    for (k = 0; k < 24; k++) {   /* mar */
+        float a0 = 2 * (float)M_PI * k / 24, a1 = 2 * (float)M_PI * (k + 1) / 24;
+        mesh_tri_flat(m, v3(c.x, 0.3f, c.z), v3(c.x + cosf(a1) * R, 0.3f, c.z + sinf(a1) * R), v3(c.x + cosf(a0) * R, 0.3f, c.z + sinf(a0) * R), col(40, 150, 200));
+    }
+    for (k = 0; k < 14; k++) {   /* islitas a lo lejos */
+        float a = 2 * (float)M_PI * k / 14 + rng_range(&rg, -0.12f, 0.12f), d = tr->extent + rng_range(&rg, 900, 2200);
+        V3 b = v3(c.x + cosf(a) * d, -4, c.z + sinf(a) * d);
+        float rr = rng_range(&rg, 120, 300);
+        mesh_cone(m, b, rr * 1.15f, 8.0f, 8, col(232, 214, 160));
+        mesh_cone(m, vadd(b, v3(0, 6, 0)), rr, rng_range(&rg, 60, 200), 7, (k & 1) ? col(70, 150, 70) : col(84, 164, 78));
+    }
+    {   /* volcan con crater de lava */
+        V3 b = v3(c.x - tr->extent - 1500, -4, c.z - 900);
+        mesh_cone(m, b, 900, 420, 10, col(110, 88, 74));
+        mesh_prism(m, vadd(b, v3(0, 400, 0)), 120, 22, 10, col(110, 88, 74), col(255, 110, 30));
+        for (k = 0; k < 5; k++) disco2(m, vadd(b, v3(rng_range(&rg, -60, 60), 470 + k * 55, rng_range(&rg, -60, 60))), 70 + k * 18, 55 + k * 14, col(170, 166, 170));
+    }
+    for (k = 0; k < 30; k++) {   /* nubes */
+        float a = rng_range(&rg, 0, 6.283f), d = tr->extent + rng_range(&rg, 200, 2400);
+        float rx = rng_range(&rg, 50, 130);
+        disco2(m, v3(c.x + cosf(a) * d, rng_range(&rg, 240, 460), c.z + sinf(a) * d), rx, rx * 0.55f, col(252, 252, 255));
+    }
+}
+
+static void scenery_dragon(Track *tr) {
+    Rng rg = {4603};
+    int t, k;
+    /* estatua del dragon de jade en el lugar mas amplio dentro de la isla */
+    {
+        V3 best = tr->center;
+        float bd = -1;
+        for (t = 0; t < 600; t++) {
+            V3 q = v3(tr->center.x + rng_range(&rg, -1, 1) * tr->extent, 0, tr->center.z + rng_range(&rg, -1, 1) * tr->extent);
+            float d;
+            if (!inside_loop(tr, q.x, q.z)) continue;
+            d = min_dist_xz(tr, q, NULL);
+            if (d > bd) { bd = d; best = q; }
+        }
+        if (bd > tr->wall + 22.0f) {
+            float s2 = fminf(1.6f, (bd - tr->wall - 4.0f) / 30.0f);
+            V3 f = v3(1, 0, 0);   /* mira hacia la cabeza de la pista (al este) */
+            best.y = suelo_y(tr, best.x, best.z) - 0.4f;
+            dragon_jade(near_chunk(tr, best), best, f, s2);
+        }
+    }
+    /* gradas en la panza, junto a la meta */
+    {
+        int i0 = 4 * tr->n / 166;
+        V3 rr = tr->r[i0], ff = vnorm(v3(tr->t[i0].x, 0, tr->t[i0].z));
+        float so = (rr.x * (tr->p[i0].x - tr->center.x) + rr.z * (tr->p[i0].z - tr->center.z)) > 0 ? 1.0f : -1.0f;
+        V3 q = at(tr, i0, so * (tr->wall + 4.0f), 0);
+        q.y = tr->p[i0].y - 0.2f;
+        grada(chunk_mesh(tr, i0), &rg, q, vscale(rr, -so), ff, 40.0f);
+    }
+    /* faroles rojos a lo largo de la pista, de los dos lados */
+    for (k = 0; k < tr->n; k += 18) {
+        int sd = (k / 18) & 1 ? 1 : -1;
+        V3 q = at(tr, k, sd * (tr->wall + 3.0f), 0);
+        if (min_dist_xz(tr, q, NULL) < tr->wall + 2.0f) continue;
+        q.y = suelo_y(tr, q.x, q.z) - 0.1f;
+        farol_rojo(chunk_mesh(tr, k), q);
+    }
+    /* palmeras: muchas junto a la playa y en la isla */
+    for (t = 0, k = 0; t < 8000 && k < 300; t++) {
+        V3 q = v3(tr->center.x + rng_range(&rg, -1, 1) * (tr->extent + 110), 0, tr->center.z + rng_range(&rg, -1, 1) * (tr->extent + 110));
+        float d = min_dist_xz(tr, q, NULL);
+        if (d < tr->wall + 6.0f) continue;
+        q.y = suelo_y(tr, q.x, q.z);
+        if (q.y < 0.6f) continue;
+        if (inside_loop(tr, q.x, q.z) && d > tr->wall + 50.0f && rng_range(&rg, 0, 1) < 0.6f) continue;   /* el centro, mas despejado */
+        q.y -= 0.2f;
+        if (rng_range(&rg, 0, 1) < 0.75f) palmera(near_chunk(tr, q), q, rng_range(&rg, 0.9f, 1.4f));
+        else tree_round(near_chunk(tr, q), q, rng_range(&rg, 0.9f, 1.3f));
+        k++;
+    }
+    /* sombrillas en la arena */
+    for (t = 0, k = 0; t < 6000 && k < 40; t++) {
+        static const Col SC[4] = {{230, 40, 40, 255}, {250, 200, 30, 255}, {40, 120, 230, 255}, {250, 250, 250, 255}};
+        V3 q = v3(tr->center.x + rng_range(&rg, -1, 1) * (tr->extent + 120), 0, tr->center.z + rng_range(&rg, -1, 1) * (tr->extent + 120));
+        float d = min_dist_xz(tr, q, NULL);
+        if (d < tr->wall + 10.0f || inside_loop(tr, q.x, q.z)) continue;
+        q.y = suelo_y(tr, q.x, q.z);
+        if (q.y < 0.5f || q.y > 2.0f) continue;
+        sombrilla(near_chunk(tr, q), vadd(q, v3(0, -0.1f, 0)), SC[k % 4]);
+        k++;
+    }
+}
+
 /* ---------- construccion principal ---------- */
 
 void track_build_centerline(Track *tr, int id) {
@@ -10326,6 +10658,7 @@ void track_build_centerline(Track *tr, int id) {
     case TRACK_NAVIDAD: raw_from_controls(NAVIDAD_CP, sizeof(NAVIDAD_CP) / sizeof(NAVIDAD_CP[0])); tr->hw = 7.5f; break;
     case TRACK_CAPSULA: raw_from_controls(CAPSULA_CP, sizeof(CAPSULA_CP) / sizeof(CAPSULA_CP[0])); tr->hw = 8.0f; break;
     case TRACK_SUGO: raw_from_controls(SUGO_CP, sizeof(SUGO_CP) / sizeof(SUGO_CP[0])); tr->hw = 7.5f; break;
+    case TRACK_DRAGON: raw_from_controls(DRAGON_CP, sizeof(DRAGON_CP) / sizeof(DRAGON_CP[0])); tr->hw = 8.0f; break;
     default: raw_from_controls(VALLE_CP, sizeof(VALLE_CP) / sizeof(VALLE_CP[0])); tr->hw = 7.5f; break;
     }
     tr->wall = tr->hw + 1.7f;
@@ -10333,7 +10666,7 @@ void track_build_centerline(Track *tr, int id) {
     /* peralte: solo en las pistas que lo tienen. Sube el lado de afuera de cada curva:
        mucho en las curvas rapidas, menos en las horquillas lentas */
     for (i = 0; i < tr->n; i++) tr->bank[i] = 0;
-    if (id == TRACK_JABALI || id == TRACK_LAGOFUND || id == TRACK_CANTERA || id == TRACK_OVALO || id == TRACK_TUCAN || id == TRACK_PARQUELAGO || id == TRACK_NINOS || id == TRACK_NEVADO || id == TRACK_PATZ || id == TRACK_NAVIDAD || id == TRACK_CAPSULA || id == TRACK_SUGO) {
+    if (id == TRACK_JABALI || id == TRACK_LAGOFUND || id == TRACK_CANTERA || id == TRACK_OVALO || id == TRACK_TUCAN || id == TRACK_PARQUELAGO || id == TRACK_NINOS || id == TRACK_NEVADO || id == TRACK_PATZ || id == TRACK_NAVIDAD || id == TRACK_CAPSULA || id == TRACK_SUGO || id == TRACK_DRAGON) {
         static float tmp[TRACK_MAX_PTS];
         int k;
         /* fuerza y tope del peralte de cada pista (tope 0.09 = 5 grados, 0.20 = 11, 0.33 = 18) */
@@ -10341,6 +10674,7 @@ void track_build_centerline(Track *tr, int id) {
         if (id == TRACK_LAGOFUND) { kf = 7.0f; tope = 0.09f; }
         if (id == TRACK_CAPSULA) { kf = 10.0f; tope = 0.13f; }   /* peralte ligero en las curvas de la espiral */
         if (id == TRACK_SUGO) { kf = 10.0f; tope = 0.12f; }   /* peralte ligero, de circuito de montana */
+        if (id == TRACK_DRAGON) { kf = 10.0f; tope = 0.12f; }
         if (id == TRACK_CANTERA || id == TRACK_TUCAN || id == TRACK_PARQUELAGO) { kf = 9.0f; tope = 0.12f; }
         if (id == TRACK_OVALO) { kf = 45.0f; tope = 0.33f; }   /* ovalo: curvas muy peraltadas */
         if (id == TRACK_NINOS) { kf = 60.0f; tope = 0.53f; }
@@ -10658,6 +10992,19 @@ void track_build(Track *tr, int id) {
         anillo_lejano(tr, SMA_LEJOS - 0.1f, col(180, 160, 124), col(132, 126, 104));
         scenery_sma(tr);
         tr->fog_start = 700.0f; tr->fog_end = 3000.0f; tr->zfar = 3600.0f;
+        break;
+    case TRACK_DRAGON:
+        /* isla tropical con forma de dragon: pasto, playa y mar */
+        grass = col(98, 182, 74);
+        tr->terrain = 12; tr->street_y = 0.0f;
+        tr->curb_a = col(220, 40, 40); tr->curb_b = col(250, 210, 40);
+        tr->sky_top = col(40, 130, 230); tr->sky_horizon = col(176, 222, 250); tr->fog = col(176, 220, 246);
+        build_road(tr, col(240, 240, 240), col(220, 40, 40), grass);
+        mesh_init(&tr->world);
+        build_world_terrain(tr);
+        cielo_dragon(tr);
+        scenery_dragon(tr);
+        tr->fog_start = 700.0f; tr->fog_end = 3600.0f; tr->zfar = 4200.0f;
         break;
     case TRACK_SUGO:
         /* circuito de montana japones: bosque de cedros, arces de otono, guardarriel y cielo despejado */
