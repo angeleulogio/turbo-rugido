@@ -427,11 +427,8 @@ static void audio_init(void) {
         DCFlushRange(siren_buf, siren_bytes);
     }
     {
-        int n = musica_menu_muestras(MUSIC_RATE);
-        music_buf = alloc_snd(n, &music_bytes);
-        musica_menu_render(music_buf, n, MUSIC_RATE);
-        DCFlushRange(music_buf, music_bytes);
-        n = musica_jingle_muestras(MUSIC_RATE);
+        /* musica del menu desactivada: no se genera (music_buf queda NULL) */
+        int n = musica_jingle_muestras(MUSIC_RATE);
         jingle_buf = alloc_snd(n, &jingle_bytes);
         musica_jingle_render(jingle_buf, n, MUSIC_RATE);
         DCFlushRange(jingle_buf, jingle_bytes);

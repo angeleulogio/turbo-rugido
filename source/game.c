@@ -229,6 +229,7 @@ static void load_race(void) {
     g_track.world_gpu = plat_mesh_upload(&g_track.world);
     mesh_free(&g_track.world);
     race_setup(&g_race, &g_track, (PhysMode)G.mode, G.nplayers, G.cars, G.police);
+    g_race.laps = G.laps < 1 ? RACE_LAPS : G.laps;
     apply_player_paints();
     for (i = 0; i < ENT_MAX; i++) {
         Entity *e = &g_race.ent[i];
@@ -706,8 +707,7 @@ void game_frame(const PadIn pads[MAX_PLAYERS], float dt) {
     unsigned pr0 = pads[0].pressed;
     G.t += dt;
     if (G.st == GS_RESULTS) G.res_t += dt;
-    /* musica del menu en todas las pantallas fuera de la carrera (en resultados, despues del jingle) */
-    plat_music((G.st == GS_RACE || G.st == GS_LOADING || G.st == GS_PAUSE || (G.st == GS_RESULTS && G.res_t < 1.0f)) ? 0 : 1);
+    plat_music(0); /* musica del menu desactivada */
 
     plat_frame_begin();
 

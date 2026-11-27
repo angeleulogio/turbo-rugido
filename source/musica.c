@@ -1,6 +1,6 @@
 /* musica.c - musica sintetizada dentro del juego (sin archivos de audio)
- *  - menu: pieza original estilo consola de 16 bits (pulso con vibrato y eco, arpegios,
- *          bajo y bateria), 16 compases en bucle
+ *  - menu: pieza original synthwave (sierras desafinadas con eco, pads que respiran con el bombo,
+ *          arpegio, bajo pulsante y bateria de los 80), 16 compases en bucle
  *  - jingle: fanfarria de 8 bits de 3 segundos al cruzar la meta
  */
 #include <math.h>
@@ -8,46 +8,47 @@
 #include <string.h>
 #include "musica.h"
 
-#define BPM 132.0f
+#define BPM 104.0f
 #define COMPASES 16
 #define SEMIS (COMPASES * 16)   /* semicorcheas en todo el bucle */
 
 typedef struct { unsigned char nota, dur; } Nota;   /* nota MIDI (0 = silencio), duracion en semicorcheas */
 
-/* melodia: 16 compases (cada uno suma 16 semicorcheas) */
+/* tema synthwave en La menor: melodia larga y cantada (cada compas suma 16 semicorcheas) */
 static const Nota MELODIA[] = {
-    /* A: C G Am F C G F G */
-    {76, 4}, {79, 2}, {84, 2}, {83, 2}, {79, 2}, {76, 4},
-    {74, 2}, {79, 2}, {83, 4}, {81, 2}, {79, 2}, {74, 4},
-    {72, 2}, {76, 2}, {81, 4}, {79, 2}, {76, 2}, {81, 4},
-    {81, 4}, {84, 2}, {81, 2}, {79, 4}, {77, 4},
-    {76, 2}, {79, 2}, {84, 4}, {88, 4}, {86, 2}, {84, 2},
-    {83, 4}, {86, 2}, {83, 2}, {79, 4}, {74, 4},
-    {81, 2}, {84, 2}, {89, 4}, {88, 2}, {84, 2}, {81, 4},
-    {79, 4}, {83, 4}, {86, 6}, {0, 2},
-    /* B: Am F C G Am F G G */
-    {81, 6}, {84, 2}, {88, 4}, {86, 2}, {84, 2},
-    {84, 4}, {81, 4}, {77, 4}, {81, 4},
+    /* A: Am F C G Am F C G */
+    {76, 6}, {74, 2}, {72, 4}, {69, 4},
+    {72, 6}, {69, 2}, {72, 4}, {77, 4},
+    {76, 8}, {79, 4}, {76, 4},
+    {74, 12}, {0, 4},
+    {76, 6}, {79, 2}, {81, 4}, {79, 4},
+    {81, 6}, {84, 2}, {81, 4}, {77, 4},
     {79, 6}, {76, 2}, {79, 4}, {84, 4},
-    {83, 2}, {84, 2}, {86, 4}, {83, 4}, {79, 4},
-    {88, 4}, {86, 2}, {84, 2}, {81, 4}, {76, 4},
-    {77, 2}, {81, 2}, {84, 4}, {89, 4}, {88, 4},
-    {86, 4}, {83, 4}, {79, 4}, {83, 4},
-    {86, 6}, {83, 2}, {79, 4}, {0, 4},
+    {83, 12}, {0, 4},
+    /* B: F G Am Am F G E E */
+    {81, 8}, {84, 4}, {81, 4},
+    {83, 8}, {86, 4}, {83, 4},
+    {84, 6}, {83, 2}, {81, 4}, {76, 4},
+    {81, 16},
+    {77, 4}, {81, 4}, {84, 4}, {89, 4},
+    {88, 6}, {86, 2}, {83, 4}, {79, 4},
+    {80, 8}, {83, 4}, {88, 4},
+    {88, 12}, {0, 4},
 };
 
-/* acorde de cada compas: raiz del bajo y las tres notas del arpegio */
+/* acorde de cada compas: raiz del bajo y las tres notas del acorde */
 static const unsigned char ACORDES[COMPASES][4] = {
-    {48, 60, 64, 67}, {43, 55, 59, 62}, {45, 57, 60, 64}, {41, 53, 57, 60},
-    {48, 60, 64, 67}, {43, 55, 59, 62}, {41, 53, 57, 60}, {43, 55, 59, 62},
-    {45, 57, 60, 64}, {41, 53, 57, 60}, {48, 60, 64, 67}, {43, 55, 59, 62},
-    {45, 57, 60, 64}, {41, 53, 57, 60}, {43, 55, 59, 62}, {43, 55, 59, 62},
+    {45, 57, 60, 64}, {41, 53, 57, 60}, {48, 55, 60, 64}, {43, 55, 59, 62},
+    {45, 57, 60, 64}, {41, 53, 57, 60}, {48, 55, 60, 64}, {43, 55, 59, 62},
+    {41, 53, 57, 60}, {43, 55, 59, 62}, {45, 57, 60, 64}, {45, 57, 60, 64},
+    {41, 53, 57, 60}, {43, 55, 59, 62}, {40, 56, 59, 64}, {40, 56, 59, 64},
 };
 
 static float frec(int nota) { return 440.0f * powf(2.0f, (nota - 69) / 12.0f); }
 
 static float pulso(float fase, float ancho) { fase -= floorf(fase); return fase < ancho ? 1.0f : -1.0f; }
 static float triangulo(float fase) { fase -= floorf(fase); return fase < 0.5f ? 4.0f * fase - 1.0f : 3.0f - 4.0f * fase; }
+static float sierra(float fase) { fase -= floorf(fase); return 2.0f * fase - 1.0f; }
 
 static unsigned int ruido_semilla = 22222;
 static float ruido(void) {
@@ -55,7 +56,7 @@ static float ruido(void) {
     return ((ruido_semilla >> 9) & 0xFFFF) / 32768.0f - 1.0f;
 }
 
-/* envolvente sencilla: ataque corto, cae a un sostenido y suelta al final de la nota */
+/* envolvente sencilla: ataque, cae a un sostenido y suelta al final de la nota */
 static float envolvente(float t, float dur, float ataque, float sost, float suelta) {
     float a = t < ataque ? t / ataque : 1.0f;
     float d = sost + (1.0f - sost) * expf(-(t - ataque) * 6.0f);
@@ -69,73 +70,107 @@ static short a16(float x) {
     return (short)(x * 30000.0f);
 }
 
+/* filtro pasa bajos de un polo */
+static float pb(float *y, float x, float a) { *y += a * (x - *y); return *y; }
+static float coef(float fc, int rate) { return 1.0f - expf(-2.0f * (float)M_PI * fc / rate); }
+
 int musica_menu_muestras(int rate) {
     float semi = 60.0f / BPM / 4.0f;
     return (int)(SEMIS * semi * rate);
 }
 
 void musica_menu_render(short *out, int n, int rate) {
-    float semi = 60.0f / BPM / 4.0f;
-    int eco = (int)(3 * semi * rate);   /* eco a 3 semicorcheas */
+    float semi = 60.0f / BPM / 4.0f, beat = 4 * semi;
     float *lead = (float *)calloc(n, sizeof(float));
     int i, k, pos;
-    float fase;
     if (!lead) { memset(out, 0, n * sizeof(short)); return; }
     ruido_semilla = 22222;
-    /* melodia (pulso 50% con vibrato) */
+    /* melodia: dos sierras desafinadas + octava baja suave, filtrada, con vibrato que entra despacio */
     pos = 0;
-    fase = 0;
-    for (k = 0; k < (int)(sizeof(MELODIA) / sizeof(MELODIA[0])); k++) {
-        float dur = MELODIA[k].dur * semi;
-        int len = (int)(dur * rate), j;
-        if (MELODIA[k].nota) {
-            float f = frec(MELODIA[k].nota);
-            for (j = 0; j < len && pos + j < n; j++) {
-                float t = (float)j / rate;
-                float vib = 1.0f + 0.006f * sinf(2 * (float)M_PI * 5.5f * t) * fminf(1.0f, t * 4.0f);
-                fase += f * vib / rate;
-                lead[pos + j] = pulso(fase, 0.5f) * envolvente(t, dur, 0.008f, 0.7f, 0.03f) * 0.20f;
+    {
+        float f1 = 0, f2 = 0, f3 = 0, y = 0, a = coef(3600.0f, rate);
+        for (k = 0; k < (int)(sizeof(MELODIA) / sizeof(MELODIA[0])); k++) {
+            float dur = MELODIA[k].dur * semi;
+            int len = (int)(dur * rate), j;
+            if (MELODIA[k].nota) {
+                float f = frec(MELODIA[k].nota);
+                for (j = 0; j < len && pos + j < n; j++) {
+                    float t = (float)j / rate;
+                    float vib = 1.0f + 0.005f * sinf(2 * (float)M_PI * 5.0f * t) * fminf(1.0f, fmaxf(0.0f, t - 0.25f) * 3.0f);
+                    float x;
+                    f1 += f * vib * 1.004f / rate;
+                    f2 += f * vib * 0.996f / rate;
+                    f3 += f * vib * 0.5f / rate;
+                    x = sierra(f1) + sierra(f2) + 0.5f * pulso(f3, 0.5f);
+                    lead[pos + j] = pb(&y, x, a) * envolvente(t, dur, 0.02f, 0.85f, 0.06f) * 0.17f;
+                }
             }
+            pos += len;
         }
-        pos += len;
     }
-    for (i = 0; i < n; i++) {
-        float t = (float)i / rate;
-        int s = (int)(t / semi);
-        float ts = t - s * semi;
-        int compas = (s / 16) % COMPASES, paso = s % 16;
-        const unsigned char *ac = ACORDES[compas];
-        float x = 0;
-        /* eco de la melodia (dos rebotes) */
-        x += lead[i];
-        if (i >= eco) x += lead[i - eco] * 0.35f;
-        if (i >= 2 * eco) x += lead[i - 2 * eco] * 0.15f;
-        /* bajo: triangulo en corcheas, octava alterna */
-        {
-            int nb = ac[0] + ((paso / 2) & 1 ? 12 : 0);
-            float tb = t - (s & ~1) * semi;
-            x += triangulo(t * frec(nb)) * envolvente(tb, 2 * semi, 0.004f, 0.8f, 0.02f) * 0.30f;
+    {
+        int eco1 = (int)(3 * semi * rate), eco2 = (int)(6 * semi * rate), eco3 = (int)(0.043f * rate), eco4 = (int)(0.071f * rate);
+        float ph_pad[3] = {0, 0, 0}, ph_pad2[3] = {0, 0, 0}, ph_arp = 0, ph_bajo = 0, ph_bajo2 = 0;
+        float y_pad = 0, y_arp = 0, y_bajo = 0, y_hat = 0;
+        float a_pad = coef(900.0f, rate), a_bajo = coef(420.0f, rate);
+        int s_prev = -1;
+        float fpad[3] = {0, 0, 0}, fbajo = 0, farp = 0;
+        for (i = 0; i < n; i++) {
+            float t = (float)i / rate;
+            int s = (int)(t / semi);
+            float ts = t - s * semi, tb = fmodf(t, beat);
+            int compas = (s / 16) % COMPASES, paso = s % 16;
+            const unsigned char *ac = ACORDES[compas];
+            float x = 0, bombeo = 0.3f + 0.7f * fminf(1.0f, tb / (0.6f * beat));   /* los pads "respiran" con el bombo */
+            if (s != s_prev) {   /* cambia la semicorchea: recalcular frecuencias */
+                static const int arp[4] = {1, 2, 3, 2};
+                int q;
+                for (q = 0; q < 3; q++) fpad[q] = frec(ac[1 + q]);
+                fbajo = frec(ac[0]);
+                farp = frec(ac[arp[paso % 4]] + 12 + ((paso / 4) % 2 ? 12 : 0));
+                s_prev = s;
+            }
+            /* melodia con eco y un poco de ambiente */
+            x += lead[i];
+            if (i >= eco1) x += lead[i - eco1] * 0.38f;
+            if (i >= eco2) x += lead[i - eco2] * 0.18f;
+            if (i >= eco3) x += lead[i - eco3] * 0.22f;
+            if (i >= eco4) x += lead[i - eco4] * 0.16f;
+            /* pads: acorde de sierras desafinadas muy filtradas */
+            {
+                float p = 0;
+                int q;
+                for (q = 0; q < 3; q++) {
+                    ph_pad[q] += fpad[q] * 1.003f / rate;
+                    ph_pad2[q] += fpad[q] * 0.997f / rate;
+                    p += sierra(ph_pad[q]) + sierra(ph_pad2[q]);
+                }
+                x += pb(&y_pad, p, a_pad) * 0.075f * bombeo;
+            }
+            /* arpegio de sierra en semicorcheas, con brillo que se apaga en cada nota */
+            ph_arp += farp / rate;
+            x += pb(&y_arp, sierra(ph_arp), coef(600.0f + 3000.0f * expf(-ts * 25.0f), rate)) * expf(-ts * 9.0f) * 0.14f * bombeo;
+            /* bajo pulsante en corcheas: sierra + octava, filtrado */
+            {
+                float te = fmodf(t, 2 * semi);
+                ph_bajo += fbajo / rate;
+                ph_bajo2 += fbajo * 0.5f / rate;
+                x += pb(&y_bajo, sierra(ph_bajo) + 0.6f * pulso(ph_bajo2, 0.5f), a_bajo) * envolvente(te, 2 * semi, 0.004f, 0.7f, 0.03f) * 0.20f * (0.5f + 0.5f * bombeo);
+            }
+            /* bateria: bombo en cada tiempo, caja con cola de reverberacion cortada, platillo en contratiempo */
+            if (tb < 0.18f) x += sinf(2 * (float)M_PI * (48.0f * tb + 110.0f / 35.0f * (1.0f - expf(-tb * 35.0f)))) * expf(-tb * 16.0f) * 0.36f;
+            if (paso == 4 || paso == 12) {
+                if (ts < 0.04f) x += (ruido() * 0.6f + 0.4f * sinf(2 * (float)M_PI * 200.0f * ts)) * 0.30f;
+            }
+            {
+                int ps = (paso >= 12) ? paso - 12 : (paso >= 4 ? paso - 4 : -1);
+                float tc = ps >= 0 ? ps * semi + ts : -1;
+                if (tc >= 0.04f && tc < 0.30f) x += ruido() * 0.20f * (1.0f - (tc - 0.04f) / 0.26f);   /* cola cortada */
+            }
+            if ((paso & 3) == 2 && ts < 0.09f) x += (ruido() - pb(&y_hat, ruido(), 0.5f)) * expf(-ts * 40.0f) * 0.16f;
+            out[i] = a16(x * 0.85f);
         }
-        /* arpegio: pulso 25%, semicorcheas sobre las notas del acorde */
-        {
-            int na = ac[1 + (paso % 3)] + 12;
-            x += pulso(t * frec(na), 0.25f) * envolvente(ts, semi, 0.002f, 0.4f, 0.01f) * 0.07f;
-        }
-        /* bateria */
-        if (paso == 0 || paso == 8 || paso == 10) {   /* bombo */
-            float tb = ts + (paso == 10 ? 0 : 0);
-            if (tb < 0.14f) x += sinf(2 * (float)M_PI * (45.0f + 90.0f * expf(-tb * 30.0f)) * tb) * expf(-tb * 18.0f) * 0.45f;
-        }
-        if (paso == 4 || paso == 12) {                /* caja */
-            if (ts < 0.15f) x += (ruido() * 0.7f + 0.3f * sinf(2 * (float)M_PI * 190.0f * ts)) * expf(-ts * 22.0f) * 0.28f;
-        }
-        if ((paso & 1) == 0 && ts < 0.035f)            /* platillo cerrado */
-            x += ruido() * expf(-ts * 120.0f) * ((paso & 2) ? 0.06f : 0.10f);
-        /* acorde suave de fondo (pad) */
-        x += (triangulo(t * frec(ac[1])) + triangulo(t * frec(ac[2])) + triangulo(t * frec(ac[3]))) * 0.025f;
-        out[i] = a16(x * 0.85f);
     }
-    /* suavizar la union del bucle */
     for (i = 0; i < 64 && i < n; i++) out[n - 1 - i] = (short)(out[n - 1 - i] * (i / 64.0f));
     free(lead);
 }

@@ -36,6 +36,8 @@ const CarSpec CAR_SPECS[CAR_COUNT] = {
     {"SEDAN CIUDAD", "EL SEDAN DEL TRAFICO", 0.40f, 0.45f, 0.62f, 60.0f, 8.0f, 1.00f, 1.05f, 1300, 150000, 1.05f, 1, 0.60f, 100, {120, 140, 170, 255}, {34, 34, 38, 255}},
     {"FURGONETA", "LA FURGONETA DE REPARTO", 0.30f, 0.35f, 0.40f, 55.0f, 6.8f, 0.90f, 0.90f, 2000, 140000, 1.00f, 0, 0.55f, 101, {236, 236, 236, 255}, {220, 220, 225, 255}},
     /* la patrulla de las persecuciones: pesada y estable, con torreta */
+    /* formula de los 90: el que mejor acelera y maneja, pero el de menor velocidad maxima de la clase A */
+    {"FORMULA 90", "MONOPLAZA DE LOS 90", 0.90f, 1.00f, 1.00f, 73.5f, 13.0f, 1.22f, 0.82f, 620, 380000, 1.32f, 0, 0.45f, 23, {214, 24, 30, 255}, {245, 245, 245, 255}},
     {"PATRULLA", "INTERCEPTOR DE LA POLICIA", 0.86f, 0.80f, 0.72f, 72.0f, 10.0f, 1.04f, 0.98f, 1520, 290000, 1.10f, 0, 0.52f, 8, {24, 24, 30, 255}, {245, 245, 250, 255}},
 };
 
@@ -64,6 +66,7 @@ const CarInfo CAR_INFO[CAR_COUNT] = {
     {"V10 CENTRAL", "CURVAS SUAVES Y TOMAS LATERALES.", "ESCAPES REDONDOS AL CENTRO.", "DIBUJO DE LOS HERMANOS"},
     {"4 CILINDROS", "EL SEDAN DE LA CIUDAD.", "NO GANA CARRERAS, PERO SE ESCONDE BIEN.", "AUTO DEL TRAFICO"},
     {"DIESEL", "FURGONETA ALTA DE REPARTO.", "LA MAS LENTA Y PESADA DEL GARAGE.", "AUTO DEL TRAFICO"},
+    {"V10 3.5 L", "MONOPLAZA DE LOS 90 CON ALERONES.", "EL QUE MEJOR ACELERA Y DOBLA, PERO NO EL MAS VELOZ.", "IDEA DE LOS HERMANOS"},
     {"V8 POLICIA", "INTERCEPTOR CON DEFENSA DE EMPUJE.", "EL MISMO AUTO QUE TE PERSIGUE.", "DISENO ORIGINAL DEL JUEGO"},
 };
 
@@ -74,6 +77,7 @@ const char CAR_CLASS[CAR_COUNT] = {
     'B', 'C', 'C', 'C',                          /* SIRIO GT, SVSR5, BELFI V8 69, CARRITO */
     'A', 'A', 'A',                               /* HALCON R, TORNADO V8, QUASAR */
     'C', 'C',                                    /* SEDAN CIUDAD, FURGONETA */
+    'A',                                         /* FORMULA 90 */
     'B'                                          /* PATRULLA */
 };
 
@@ -596,6 +600,51 @@ void car_build_mesh(Mesh *m, int shape, Col paint, Col accent) {
         mesh_tri_flat(m, v3(-0.30f, 0.43f, -2.31f), v3(0.30f, 0.43f, -2.31f), v3(0.0f, 0.26f, -2.31f), black);
         wheel(m, -0.88f, -1.40f, 0.34f, 0.28f); wheel(m, 0.88f, -1.40f, 0.34f, 0.28f);
         wheel(m, -0.92f, 1.40f, 0.36f, 0.36f); wheel(m, 0.92f, 1.40f, 0.36f, 0.36f);
+        break;
+    }
+    case 23: { /* FORMULA 90: monoplaza de los 90, ruedas descubiertas, alerones, toma de aire y piloto */
+        Col negro = col(20, 20, 24), casco = col(250, 220, 40), visor = col(30, 40, 60);
+        int s;
+        /* nariz elevada que se angosta hacia el frente */
+        mesh_box(m, v3(-0.10f, 0.30f, -2.45f), v3(0.10f, 0.44f, -1.90f), paint, paint);
+        mesh_box(m, v3(-0.15f, 0.30f, -1.90f), v3(0.15f, 0.52f, -1.30f), paint, accent);
+        mesh_box(m, v3(-0.22f, 0.24f, -1.30f), v3(0.22f, 0.60f, -0.70f), paint, paint);
+        /* aleron delantero con placas laterales y pilares */
+        mesh_box(m, v3(-0.98f, 0.10f, -2.62f), v3(0.98f, 0.15f, -2.28f), accent, accent);
+        mesh_box(m, v3(-0.98f, 0.18f, -2.50f), v3(0.98f, 0.21f, -2.34f), paint, paint);
+        for (s = -1; s <= 1; s += 2) {
+            mesh_box(m, v3(s * 0.98f - 0.02f, 0.08f, -2.64f), v3(s * 0.98f + 0.02f, 0.32f, -2.26f), paint, paint);
+            mesh_box(m, v3(s * 0.08f - 0.02f, 0.14f, -2.45f), v3(s * 0.08f + 0.02f, 0.32f, -2.35f), negro, negro);
+        }
+        /* monocasco, cabina abierta y el piloto con casco */
+        mesh_box(m, v3(-0.36f, 0.16f, -0.70f), v3(0.36f, 0.62f, 0.70f), paint, paint);
+        mesh_box(m, v3(-0.24f, 0.62f, -0.55f), v3(0.24f, 0.63f, 0.05f), negro, negro);
+        mesh_box(m, v3(-0.15f, 0.60f, -0.28f), v3(0.15f, 0.86f, 0.02f), casco, casco);
+        mesh_box(m, v3(-0.13f, 0.70f, -0.29f), v3(0.13f, 0.78f, -0.27f), visor, visor);
+        /* toma de aire sobre el piloto y cubierta del motor que baja hacia atras */
+        mesh_box(m, v3(-0.17f, 0.62f, 0.05f), v3(0.17f, 0.98f, 0.45f), paint, accent);
+        mesh_quad_flat(m, v3(-0.12f, 0.72f, 0.049f), v3(0.12f, 0.72f, 0.049f), v3(0.12f, 0.92f, 0.049f), v3(-0.12f, 0.92f, 0.049f), negro);
+        mesh_quad(m, v3(-0.17f, 0.98f, 0.45f), v3(0.17f, 0.98f, 0.45f), v3(0.12f, 0.50f, 1.70f), v3(-0.12f, 0.50f, 1.70f), paint);
+        for (s = -1; s <= 1; s += 2) {
+            mesh_tri(m, v3(s * 0.17f, 0.62f, 0.45f), v3(s * 0.17f, 0.98f, 0.45f), v3(s * 0.12f, 0.50f, 1.70f), paint);
+            /* pontones laterales con toma de aire negra */
+            mesh_box(m, v3(s > 0 ? 0.36f : -0.74f, 0.14f, -0.30f), v3(s > 0 ? 0.74f : -0.36f, 0.48f, 0.95f), paint, accent);
+            mesh_quad_flat(m, v3(s * 0.40f, 0.20f, -0.305f), v3(s * 0.70f, 0.20f, -0.305f), v3(s * 0.70f, 0.44f, -0.305f), v3(s * 0.40f, 0.44f, -0.305f), negro);
+            /* brazos de suspension */
+            mesh_box(m, v3(s > 0 ? 0.20f : -0.72f, 0.33f, -1.78f), v3(s > 0 ? 0.72f : -0.20f, 0.37f, -1.70f), negro, negro);
+            mesh_box(m, v3(s > 0 ? 0.70f : -0.80f, 0.33f, 1.32f), v3(s > 0 ? 0.80f : -0.70f, 0.37f, 1.40f), negro, negro);
+            /* placas del aleron trasero */
+            mesh_box(m, v3(s * 0.62f - 0.02f, 0.40f, 1.70f), v3(s * 0.62f + 0.02f, 1.08f, 2.12f), paint, paint);
+        }
+        mesh_box(m, v3(-0.40f, 0.14f, 0.95f), v3(0.40f, 0.42f, 1.85f), paint, paint);   /* caja de cambios */
+        /* aleron trasero de dos planos con su soporte */
+        mesh_box(m, v3(-0.62f, 0.94f, 1.76f), v3(0.62f, 1.02f, 2.08f), accent, accent);
+        mesh_box(m, v3(-0.62f, 0.72f, 1.86f), v3(0.62f, 0.77f, 2.06f), paint, paint);
+        mesh_box(m, v3(-0.03f, 0.42f, 1.84f), v3(0.03f, 0.94f, 1.94f), negro, negro);
+        mesh_box(m, v3(-0.08f, 0.22f, 1.86f), v3(0.08f, 0.32f, 1.92f), col(255, 40, 40), col(255, 40, 40));   /* luz de lluvia */
+        /* ruedas descubiertas: las de atras mas anchas */
+        wheel(m, -0.86f, -1.74f, 0.33f, 0.30f); wheel(m, 0.86f, -1.74f, 0.33f, 0.30f);
+        wheel(m, -0.88f, 1.36f, 0.36f, 0.42f); wheel(m, 0.88f, 1.36f, 0.36f, 0.42f);
         break;
     }
     case 4: { /* sedan deportivo de 4 puertas (dibujo del hermano) */

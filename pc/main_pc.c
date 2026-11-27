@@ -72,7 +72,7 @@ static void sim_test(int trk, int mode, int car) {
             }
             { int q; for (q = POLICE_BASE; q < ENT_MAX; q++) { if (r.ent[q].roadblock && r.ent[q].rb_t > 29.98f) rb++; if (r.ent[q].crashed && r.ent[q].crash_t < 0.02f && r.ent[q].crash_t > 0) pcrash++; } }
         }
-        if (pl->veh.wall_impact > 3.0f) walls++;
+        if (pl->veh.wall_impact > 3.0f) { walls++; if (getenv("MUROS_DBG")) printf("muro idx=%d imp=%.1f\n", track_locate(&tr, pl->pos, -1).idx, pl->veh.wall_impact); }
         {
             float sp = mode == MODE_SIM ? pl->veh.vf : pl->veh.speed;
             if (sp > maxspd) maxspd = sp;
@@ -243,6 +243,21 @@ int main(int argc, char **argv) {
         press(BTN_RIGHT, 8); press(BTN_RIGHT, 8); press(BTN_RIGHT, 8); press(0, 20);
         shot("n_vueltas");
         printf("capturas patrulla: %d\n", n);
+        return 0;
+    }
+    if (argc > 1 && strcmp(argv[1], "vueltas") == 0) {
+        extern int g_pc_music;
+        /* flujo real del menu: elegir 5 vueltas y verificar que la carrera las use */
+        extern Race *pc_race(void);
+        int f;
+        game_init();
+        game_frame(none, 1.0f / 60.0f);
+        press(BTN_START, 10); press(BTN_A, 10); press(BTN_A, 10); press(BTN_A, 10);
+        press(BTN_RIGHT, 8); press(BTN_RIGHT, 8); press(0, 10);
+        press(BTN_A, 10); press(BTN_A, 10); press(BTN_A, 10); press(BTN_A, 10);
+        for (f = 0; f < 600; f++) game_frame(none, 1.0f / 60.0f);
+        shot("v_carrera");
+        printf("vueltas en carrera: %d  musica: %d\n", pc_race()->laps, g_pc_music);
         return 0;
     }
     if (argc > 2 && strcmp(argv[1], "suvfoto") == 0) {
